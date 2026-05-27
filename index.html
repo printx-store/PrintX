@@ -1,0 +1,2060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PrintX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/></noscript>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:'Inter',sans-serif;background:#F2F3F5;color:#111827;overflow-x:hidden}
+
+/* ── SPLASH SCREEN ── */
+#splash{position:fixed;inset:0;background:#f4f4f4;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:9999;transition:opacity .6s ease, transform .6s ease}
+#splash.hide{opacity:0;transform:scale(1.04);pointer-events:none}
+.splash-scene{position:relative;width:260px;height:260px}
+.splash-printer{position:absolute;top:84px;left:50%;transform:translateX(-50%);width:160px;height:70px;background:linear-gradient(145deg,#1A3A6B,#0f2447);border-radius:10px;box-shadow:0 18px 35px rgba(26,58,107,0.35);z-index:10}
+.splash-feeder{position:absolute;top:80px;left:50%;transform:translateX(-50%);width:112px;height:10px;background:#0a0a0a;border-radius:4px 4px 0 0;z-index:5}
+.splash-output{position:absolute;top:148px;left:50%;transform:translateX(-50%);width:104px;height:10px;background:#0a0a0a;border-radius:0 0 4px 4px;z-index:15}
+.splash-paper{position:absolute;left:50%;transform:translateX(-50%);width:80px;height:105px;background:#fff;border-radius:3px;box-shadow:0 4px 12px rgba(0,0,0,0.1);display:flex;justify-content:center;align-items:center;font-size:15px;font-weight:800;z-index:8;top:-25px}
+.splash-text{opacity:0;transform:translateY(8px);transition:opacity .4s ease,transform .4s ease}
+.splash-text span{color:#111}
+.splash-text .x{color:#E8690A}
+.splash-scene.printed .splash-text{opacity:1;transform:translateY(0)}
+.splash-label{margin-top:28px;font-size:22px;font-weight:800;color:#1A3A6B;letter-spacing:-0.5px}
+.splash-label em{color:#E8690A;font-style:normal}
+.splash-sub{font-size:13px;color:#6B7280;margin-top:6px}
+
+/* ── TOPBAR ── */
+.topbar{position:sticky;top:0;z-index:50;background:#fff;height:58px;border-bottom:1.5px solid #E5E7EB;display:flex;align-items:center}
+.topbar-inner{width:100%;max-width:500px;margin:0 auto;padding:0 16px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:25px;font-weight:800;color:#111827;cursor:pointer;letter-spacing:-0.5px}
+.logo span{color:#E8690A}
+.hbtn{background:none;border:none;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:10px;color:#111827}
+.hbtn:hover{background:#F3F4F6}
+.cart-wrap{position:relative;display:inline-flex}
+.cart-dot{position:absolute;top:-4px;right:-4px;background:#E8690A;color:#fff;font-size:9px;font-weight:800;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+
+/* ── PAGES ── */
+.hidden{display:none!important}
+.page{display:none;animation:fu .22s ease}
+.page.active{display:block}
+@keyframes fu{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.wrap{max-width:500px;margin:0 auto;padding:20px 16px 90px}
+
+/* ── DRAWER ── */
+.d-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;opacity:0;pointer-events:none;transition:opacity .22s}
+.d-ov.on{opacity:1;pointer-events:all}
+.drawer{position:fixed;top:0;left:-280px;width:260px;height:100%;background:#fff;z-index:201;transition:left .26s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:4px 0 28px rgba(0,0,0,.12)}
+.drawer.on{left:0}
+.drawer-body{padding:32px 0 0;flex:1}
+.d-item{width:100%;text-align:left;background:none;border:none;font-family:'Inter',sans-serif;font-size:17px;font-weight:600;color:#111827;padding:17px 24px;cursor:pointer;display:block;transition:background .15s}
+.d-item:hover{background:#F3F4F6}
+.drawer-foot{padding:18px 20px;border-top:1px solid #E5E7EB}
+.urow{display:flex;align-items:center;gap:13px;cursor:pointer}
+.avatar{width:42px;height:42px;border-radius:50%;background:#E8690A;color:#fff;font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.uname{font-size:15px;font-weight:700}
+.usub{font-size:12px;color:#6B7280}
+
+/* ── HOME ── */
+.pg-head{margin-bottom:20px}
+.pg-head h2{font-size:22px;font-weight:800;margin-bottom:3px}
+.pg-head p{font-size:14px;color:#6B7280}
+.svc-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.svc-card{background:#fff;border-radius:18px;padding:22px 14px 18px;text-align:center;border:1.5px solid #E9EAEC;box-shadow:0 2px 8px rgba(0,0,0,.06);cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.svc-card:active{transform:scale(.97)}
+.svc-card:hover{border-color:#A5B4FC;box-shadow:0 6px 20px rgba(0,0,0,.1);transform:translateY(-2px)}
+.svc-icon{font-size:42px;display:block;margin-bottom:11px;line-height:1}
+.svc-name{font-size:13px;font-weight:700;color:#111827;line-height:1.35}
+.svc-price{font-size:11px;color:#6B7280;margin-top:4px}
+.hero{background:linear-gradient(135deg,#1A3A6B,#305a96);padding:28px 22px;border-radius:24px;margin-bottom:22px;color:#fff;box-shadow:0 10px 30px rgba(26,58,107,.25)}
+.hero-badge{display:inline-block;padding:6px 12px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.15);border-radius:999px;font-size:12px;margin-bottom:12px}
+.hero h1{font-size:28px;font-weight:800;margin-bottom:8px}
+.hero p{font-size:14px;opacity:.9;line-height:1.5;margin-bottom:18px}
+
+/* ── PRODUCTS ── */
+.chip-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;scrollbar-width:none}
+.chip-row::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;padding:8px 18px;border-radius:22px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:500;color:#6B7280;cursor:pointer;transition:all .18s;white-space:nowrap}
+.chip.on{background:#1A3A6B;color:#fff;border-color:#1A3A6B}
+.prod-list{display:flex;flex-direction:column;gap:11px}
+.prod-card{background:#fff;border-radius:16px;padding:15px;display:flex;align-items:center;gap:13px;border:1.5px solid #E9EAEC;box-shadow:0 2px 8px rgba(0,0,0,.05);transition:all .18s}
+.prod-card:hover{border-color:#A5B4FC;transform:translateX(2px)}
+.prod-ico{width:56px;height:56px;border-radius:13px;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.prod-info{flex:1;min-width:0}
+.prod-name{font-size:15px;font-weight:700;margin-bottom:2px}
+.prod-desc{font-size:12px;color:#6B7280;margin-bottom:6px}
+.prod-price{font-size:14px;font-weight:800;color:#1A3A6B}
+.add-btn{background:#1A3A6B;color:#fff;border:none;border-radius:10px;padding:9px 18px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;transition:background .18s}
+.add-btn:hover{background:#22487A}
+.sec-tabs{display:flex;background:#F3F4F6;border-radius:14px;padding:4px;margin-bottom:20px;gap:4px}
+.sec-tab{flex:1;padding:11px 8px;border:none;background:transparent;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;color:#6B7280;border-radius:11px;cursor:pointer;transition:all .2s;text-align:center;line-height:1.3}
+.sec-tab.on{background:#fff;color:#1A3A6B;box-shadow:0 2px 8px rgba(26,58,107,.13)}
+.sec-tab span{display:block;font-size:18px;margin-bottom:2px}
+.sec-panel{display:none}.sec-panel.on{display:block}
+.sec-label{font-size:12px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;padding:8px 12px;background:#F3F4F6;border-radius:10px;display:flex;align-items:center;gap:6px}
+
+/* notebook cards */
+.nb-card{background:#fff;border-radius:16px;border:1.5px solid #E9EAEC;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.05);margin-bottom:12px}
+.nb-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.nb-ico{width:48px;height:48px;border-radius:12px;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.nb-name{font-size:15px;font-weight:700}
+.nb-variants{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.nb-var{border:1.5px solid #E5E7EB;border-radius:11px;padding:10px 8px;text-align:center;background:#F8FAFC;transition:all .18s;cursor:pointer}
+.nb-var:hover{border-color:#1A3A6B;background:#EEF2FF}
+.nb-var-pg{font-size:12px;font-weight:700;color:#111827;margin-bottom:3px}
+.nb-var-price{font-size:14px;font-weight:800;color:#1A3A6B;margin-bottom:6px}
+.nb-var-bulk{font-size:10px;color:#6B7280;margin-bottom:7px}
+.nb-var-btn{background:#1A3A6B;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;cursor:pointer;width:100%}
+.nb-var-btn:hover{background:#22487A}
+.nb-bulk-btn{background:#F0FDF4;color:#15803D;border:1.5px solid #86EFAC;border-radius:8px;padding:6px 14px;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;cursor:pointer;width:100%;margin-top:5px}
+.nb-bulk-btn:hover{background:#DCFCE7}
+
+/* ── FORMS ── */
+.frow{margin-bottom:13px}
+.flabel{font-size:11px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px}
+.fsel,.finp{width:100%;background:#F3F4F6;border:1.5px solid #E5E7EB;border-radius:10px;padding:11px 13px;color:#111827;font-family:'Inter',sans-serif;font-size:14px;outline:none;-webkit-appearance:none;transition:border .18s}
+.fsel:focus,.finp:focus{border-color:#1A3A6B;background:#fff}
+.qty-row{display:inline-flex;align-items:center;background:#F3F4F6;border:1.5px solid #E5E7EB;border-radius:11px;overflow:hidden}
+.qbtn{background:none;border:none;width:42px;height:42px;font-size:21px;cursor:pointer;color:#1A3A6B;font-weight:300;transition:background .15s}
+.qbtn:hover{background:#E0E7FF}
+.qnum{width:40px;text-align:center;font-size:16px;font-weight:800}
+
+/* ── BUTTONS ── */
+.btn-p{background:#1A3A6B;color:#fff;border:none;border-radius:12px;padding:13px 22px;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;justify-content:center;transition:background .18s}
+.btn-p:hover{background:#22487A}
+.btn-p.full{width:100%;padding:15px}
+.btn-a{background:#E8690A;color:#fff;border:none;border-radius:12px;padding:15px;font-family:'Inter',sans-serif;font-size:16px;font-weight:800;cursor:pointer;width:100%;transition:background .18s;display:flex;align-items:center;justify-content:center;gap:7px}
+.btn-a:hover{background:#d45e08}
+.btn-wa{background:#25D366;color:#fff;border:none;border-radius:12px;padding:15px;font-family:'Inter',sans-serif;font-size:15px;font-weight:800;cursor:pointer;width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .18s}
+.btn-wa:hover{background:#1ebe57}
+.btn-back{background:none;border:none;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;color:#6B7280;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:8px 0;margin-bottom:14px;-webkit-tap-highlight-color:transparent}
+.btn-back:hover{color:#1A3A6B}
+.btn-o{background:#fff;color:#1A3A6B;border:1.5px solid #E5E7EB;border-radius:12px;padding:13px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;width:100%;margin-top:10px;transition:border .18s}
+.btn-o:hover{border-color:#1A3A6B}
+.btn-d{background:#FEE2E2;color:#DC2626;border:none;border-radius:9px;padding:7px 13px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer}
+.btn-sm-o{background:#fff;color:#1A3A6B;border:1.5px solid #E5E7EB;border-radius:9px;padding:7px 13px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer}
+
+/* ── CART ── */
+.c-item{background:#fff;border-radius:16px;padding:15px;border:1.5px solid #E9EAEC;box-shadow:0 2px 8px rgba(0,0,0,.05);margin-bottom:11px}
+.ci-top{display:flex;gap:11px;margin-bottom:11px}
+.ci-ico{width:48px;height:48px;border-radius:12px;background:#EEF2FF;font-size:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ci-name{font-size:15px;font-weight:700;margin-bottom:4px}
+.ci-tags{display:flex;flex-wrap:wrap;gap:4px}
+.tag{font-size:11px;background:#F3F4F6;border:1px solid #E5E7EB;padding:2px 7px;border-radius:5px;color:#6B7280}
+.ci-bot{display:flex;align-items:center;justify-content:space-between}
+.ci-price{font-size:18px;font-weight:800;color:#1A3A6B}
+.ci-act{display:flex;gap:7px;align-items:center}
+.qmini{display:inline-flex;align-items:center;background:#F3F4F6;border:1.5px solid #E5E7EB;border-radius:9px;overflow:hidden}
+.qmini .qbtn{width:34px;height:34px;font-size:18px}
+.qmini .qnum{width:32px;font-size:14px}
+.tot-card{background:#fff;border-radius:16px;border:1.5px solid #E9EAEC;padding:18px;margin-top:7px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.trow{display:flex;justify-content:space-between;font-size:14px;color:#6B7280;margin-bottom:8px}
+.trow.grand{font-size:18px;font-weight:800;color:#111827;padding-top:12px;border-top:1px solid #E5E7EB;margin-top:9px}
+.empty{text-align:center;padding:60px 16px}
+.empty .ei{font-size:54px;margin-bottom:13px}
+.empty h3{font-size:18px;font-weight:700;margin-bottom:5px}
+.empty p{font-size:13px;color:#6B7280;margin-bottom:18px}
+
+/* ── CHECKOUT ── */
+.co-card{background:#fff;border-radius:16px;border:1.5px solid #E9EAEC;padding:18px;margin-bottom:13px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.co-card h4{font-size:15px;font-weight:800;margin-bottom:15px;padding-bottom:11px;border-bottom:1px solid #E5E7EB;display:flex;align-items:center;gap:7px}
+
+/* ── ORDERS ── */
+.ord-card{background:#fff;border-radius:16px;border:1.5px solid #E9EAEC;padding:16px;margin-bottom:11px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.ord-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7px}
+.ord-id{font-size:14px;font-weight:800;color:#1A3A6B}
+.ord-dt{font-size:12px;color:#6B7280;margin-top:2px}
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}
+.pill-proc{background:#FEF3C7;color:#92400E}
+.pill-delv{background:#D1FAE5;color:#065F46}
+.pill-prnt{background:#DBEAFE;color:#1E40AF}
+
+/* ── BOTTOM NAV ── */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1.5px solid #E5E7EB;display:flex;max-width:500px;margin:0 auto;z-index:40}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px 8px;cursor:pointer;border:none;background:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:500;color:#9CA3AF;transition:color .15s;-webkit-tap-highlight-color:transparent}
+.bni.on{color:#1A3A6B}
+.bni-ico{font-size:22px;line-height:1}
+.ptitle{font-size:22px;font-weight:800;margin-bottom:18px}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:999;width:calc(100% - 28px);max-width:460px;display:flex;flex-direction:column;align-items:center;gap:7px}
+.ti{background:#111827;color:#fff;border-radius:12px;padding:12px 16px;font-size:14px;font-weight:500;width:100%;box-shadow:0 6px 20px rgba(0,0,0,.18);animation:tup .22s ease}
+.ti.ok{background:#064E3B;border:1px solid #10B981}
+.ti.er{background:#7F1D1D;border:1px solid #EF4444}
+@keyframes tup{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* backdrop-filter only on popups for performance */
+
+/* ── MESSAGE FLOAT ── */
+.msg-float{position:fixed;right:18px;bottom:84px;width:54px;height:54px;border-radius:50%;background:#25D366;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.22);z-index:99;cursor:pointer;border:none;transition:transform .18s}
+.msg-float:hover{transform:scale(1.08)}
+.msg-float svg{width:26px;height:26px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ═══════════════════════════════
+   UNIVERSAL POPUP OVERLAY
+   ═══════════════════════════════ */
+.popup-ov{position:fixed;inset:0;background:rgba(8,12,28,.62);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:400;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
+.popup-ov.on{opacity:1;pointer-events:all}
+.popup-sheet{background:rgba(255,255,255,.98);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:28px 28px 0 0;width:100%;max-width:500px;max-height:93vh;overflow-y:auto;padding:0 0 44px;transform:translateY(100%);transition:transform .35s cubic-bezier(.32,0,.18,1);box-shadow:0 -10px 50px rgba(0,0,0,.2)}
+.popup-ov.on .popup-sheet{transform:translateY(0)}
+.popup-handle{width:38px;height:4px;background:#E5E7EB;border-radius:2px;margin:14px auto 0}
+.pp-header{padding:18px 20px 0;display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.pp-back{background:none;border:none;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#6B7280;flex-shrink:0;transition:background .15s}
+.pp-back:hover{background:#F3F4F6;color:#111827}
+.pp-title-wrap{flex:1}
+.pp-title{font-size:18px;font-weight:800;color:#111827}
+.pp-sub{font-size:12px;color:#6B7280;margin-top:1px}
+.pp-body{padding:16px 20px 0}
+.pp-step-label{font-size:11px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.pp-step-label b{background:#1A3A6B;color:#fff;border-radius:50%;width:19px;height:19px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+.pp-divider{height:1px;background:#F3F4F6;margin:16px 0}
+
+/* Mode cards */
+.mode-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.mode-card{border:2px solid #E9EAEC;border-radius:18px;padding:18px 10px 14px;text-align:center;cursor:pointer;background:#fff;transition:all .22s;position:relative;overflow:hidden}
+.mode-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#EEF2FF,#E8F0FF);opacity:0;transition:opacity .22s}
+.mode-card.on{border-color:#1A3A6B}
+.mode-card.on::before{opacity:1}
+.mode-card-inner{position:relative;z-index:1}
+.mode-card-icon{font-size:36px;display:block;margin-bottom:9px}
+.mode-card-name{font-size:14px;font-weight:800;color:#111827;margin-bottom:3px}
+.mode-card-price{font-size:11px;color:#6B7280}
+.mode-card.on .mode-card-name{color:#1A3A6B}
+.mode-check{position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;background:#1A3A6B;display:none;align-items:center;justify-content:center;z-index:2}
+.mode-card.on .mode-check{display:flex}
+
+/* Sided buttons */
+.sided-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.sided-btn{border:1.5px solid #E5E7EB;border-radius:13px;padding:13px 8px;text-align:center;cursor:pointer;background:#fff;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;color:#6B7280;transition:all .2s}
+.sided-btn.on{background:#EEF2FF;border-color:#1A3A6B;color:#1A3A6B}
+.sided-btn small{display:block;font-size:11px;font-weight:500;margin-top:3px;color:#9CA3AF}
+.sided-btn.on small{color:#1A3A6B}
+
+/* Upload zone */
+.pp-upzone{background:#F8FAFC;border:2px dashed #CBD5E1;border-radius:16px;padding:22px 16px;text-align:center;transition:all .2s;margin-bottom:14px;cursor:pointer}
+.pp-upzone:hover,.pp-upzone.over{border-color:#1A3A6B;background:#EEF2FF}
+.pp-upzone-icon{font-size:32px;margin-bottom:8px}
+.pp-upzone h4{font-size:14px;font-weight:700;margin-bottom:3px;color:#111827}
+.pp-upzone p{font-size:12px;color:#6B7280;margin-bottom:12px}
+.pp-upzone-btn{background:#1A3A6B;color:#fff;border:none;border-radius:9px;padding:9px 22px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer;pointer-events:none}
+.pp-prev{background:#fff;border:1.5px solid #E5E7EB;border-radius:14px;overflow:hidden;margin-bottom:14px}
+.pp-prev-row{display:flex;align-items:center;gap:10px;padding:13px 15px}
+.pp-page-badge{display:inline-flex;align-items:center;gap:5px;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;color:#1A3A6B;margin-top:5px}
+.pp-settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.pp-settings-grid .frow{margin:0}
+.pp-price-box{background:linear-gradient(135deg,#EEF2FF,#E8F0FF);border:1.5px solid #C7D2FE;border-radius:16px;padding:14px 16px;margin-bottom:16px}
+.pp-prow{display:flex;justify-content:space-between;font-size:12px;color:#6B7280;margin-bottom:6px}
+.pp-ptot{display:flex;justify-content:space-between;font-size:19px;font-weight:800;color:#1A3A6B;padding-top:10px;border-top:1px solid #C7D2FE;margin-top:3px}
+.pp-hint{font-size:11px;color:#9CA3AF;text-align:center;margin-bottom:12px;min-height:16px}
+/* ── SIZE GRID ── */
+.size-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.size-btn{border:1.5px solid #E5E7EB;border-radius:13px;padding:12px 6px;text-align:center;cursor:pointer;background:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:800;color:#6B7280;transition:all .2s;line-height:1.2}
+.size-btn small{display:block;font-size:10px;font-weight:500;margin-top:3px;color:#9CA3AF}
+.size-btn.on{background:#EEF2FF;border-color:#1A3A6B;color:#1A3A6B}
+.size-btn.on small{color:#1A3A6B}
+
+
+/* ── PRODUCT DETAIL POPUP ── */
+#prodDetailOv .popup-sheet{padding-bottom:44px}
+.pd-hero{background:linear-gradient(135deg,#EEF2FF,#E8F0FF);margin:0 20px;border-radius:20px;padding:28px 16px;text-align:center;margin-bottom:20px}
+.pd-icon{font-size:56px;margin-bottom:8px;display:block}
+.pd-name{font-size:18px;font-weight:800;color:#111827;margin-bottom:4px}
+.pd-desc{font-size:13px;color:#6B7280}
+.pd-price-badge{display:inline-flex;align-items:center;gap:5px;background:#1A3A6B;color:#fff;border-radius:99px;padding:5px 14px;font-size:14px;font-weight:800;margin-top:10px}
+.pd-body{padding:0 20px}
+.pd-section{margin-bottom:16px}
+.pd-sec-title{font-size:11px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}
+.pd-qty-row{display:flex;align-items:center;justify-content:space-between;background:#F3F4F6;border-radius:14px;padding:12px 16px}
+.pd-qty-label{font-size:14px;font-weight:600;color:#111827}
+.pd-total-box{background:linear-gradient(135deg,#EEF2FF,#E8F0FF);border:1.5px solid #C7D2FE;border-radius:14px;padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.pd-total-label{font-size:13px;color:#6B7280}
+.pd-total-val{font-size:22px;font-weight:800;color:#1A3A6B}
+/* Bulk pricing display inside product modal */
+.bulk-info{background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.bulk-info-title{font-size:11px;font-weight:700;color:#15803D;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.bulk-row{display:flex;justify-content:space-between;font-size:13px;color:#111827;margin-bottom:4px;font-weight:500}
+.bulk-row:last-child{margin-bottom:0}
+.bulk-tag{font-size:10px;background:#15803D;color:#fff;border-radius:4px;padding:1px 5px;font-weight:700}
+
+/* ── NOTEBOOK DETAIL POPUP ── */
+.nb-detail-variants{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.nd-var-card{border:1.5px solid #E5E7EB;border-radius:14px;padding:14px;background:#F8FAFC;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:space-between}
+.nd-var-card.on{border-color:#1A3A6B;background:#EEF2FF}
+.nd-var-left{display:flex;flex-direction:column;gap:3px}
+.nd-var-pages{font-size:14px;font-weight:700;color:#111827}
+.nd-var-price{font-size:18px;font-weight:800;color:#1A3A6B}
+.nd-var-bulk{font-size:11px;color:#6B7280}
+.nd-check{width:24px;height:24px;border-radius:50%;border:2px solid #E5E7EB;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.nd-var-card.on .nd-check{background:#1A3A6B;border-color:#1A3A6B}
+.nd-check svg{display:none}
+.nd-var-card.on .nd-check svg{display:block}
+/* Bulk mode toggle */
+.bulk-toggle-row{display:flex;background:#F3F4F6;border-radius:12px;padding:4px;gap:4px;margin-bottom:14px}
+.bulk-toggle-btn{flex:1;padding:9px;border:none;background:transparent;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;color:#6B7280;border-radius:9px;cursor:pointer;transition:all .2s;text-align:center}
+.bulk-toggle-btn.on{background:#fff;color:#1A3A6B;box-shadow:0 2px 8px rgba(26,58,107,.13)}
+
+/* ── ORDER HISTORY POPUP ── */
+#historyOv .popup-sheet{padding-bottom:44px}
+.hist-empty{text-align:center;padding:40px 20px}
+.hist-empty .ei{font-size:48px;margin-bottom:12px}
+.hist-empty h3{font-size:16px;font-weight:700;margin-bottom:5px}
+.hist-empty p{font-size:13px;color:#6B7280}
+.ord-items-list{margin-top:7px}
+.ord-item-row{display:flex;justify-content:space-between;font-size:12px;color:#6B7280;padding:4px 0;border-bottom:1px solid #F3F4F6}
+.ord-item-row:last-child{border-bottom:none}
+.ord-total-row{display:flex;justify-content:space-between;font-size:14px;font-weight:800;color:#111827;padding-top:8px;margin-top:4px}
+.ord-addr{font-size:12px;color:#6B7280;margin-top:5px;display:flex;align-items:center;gap:4px}
+
+/* ── REGISTRATION POPUP ── */
+.reg-ov{position:fixed;inset:0;background:rgba(8,12,28,.65);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:500;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
+.reg-ov.on{opacity:1;pointer-events:all}
+.reg-sheet{background:rgba(255,255,255,.99);backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);border-radius:28px 28px 0 0;width:100%;max-width:500px;max-height:93vh;overflow-y:auto;padding:0 18px 44px;transform:translateY(100%);transition:transform .35s cubic-bezier(.32,0,.18,1);box-shadow:0 -10px 50px rgba(0,0,0,.22)}
+.reg-ov.on .reg-sheet{transform:translateY(0)}
+.reg-handle{width:38px;height:4px;background:#E5E7EB;border-radius:2px;margin:14px auto 20px}
+.reg-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;background:#FFF7ED;border:1px solid #FED7AA;border-radius:99px;font-size:12px;font-weight:700;color:#C2410C;margin-bottom:14px}
+.reg-input{width:100%;background:#F3F4F6;border:1.5px solid #E5E7EB;border-radius:11px;padding:12px 13px;font-family:'Inter',sans-serif;font-size:14px;color:#111827;outline:none;transition:border .18s;display:block;margin-bottom:11px}
+.reg-input:focus{border-color:#1A3A6B;background:#fff}
+.reg-input::placeholder{color:#9CA3AF}
+.reg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:11px}
+.reg-grid .reg-input{margin-bottom:0}
+.rc-box{background:linear-gradient(135deg,#F0FDF4,#ECFDF5);border:1.5px solid #86EFAC;border-radius:16px;padding:16px;margin-bottom:16px}
+.rc-label{font-size:12px;font-weight:700;color:#15803D;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.rc-code{font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#111827;background:#fff;border:1.5px solid #BBF7D0;border-radius:10px;padding:10px 13px;word-break:break-all;margin-bottom:10px;letter-spacing:.04em}
+.rc-btns{display:flex;gap:8px}
+.rc-btn{flex:1;background:#15803D;color:#fff;border:none;border-radius:9px;padding:9px 8px;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:background .15s}
+.rc-btn:hover{background:#166534}
+.rc-btn.outline{background:#fff;color:#15803D;border:1.5px solid #86EFAC}
+.rc-btn.outline:hover{background:#F0FDF4}
+.rc-import{background:#F3F4F6;border:1.5px dashed #D1D5DB;border-radius:13px;padding:14px;margin-bottom:14px}
+.rc-import h4{font-size:14px;font-weight:700;margin-bottom:10px;color:#111827;display:flex;align-items:center;gap:7px}
+.rc-import textarea{width:100%;background:#fff;border:1.5px solid #E5E7EB;border-radius:10px;padding:10px 12px;font-family:'Courier New',monospace;font-size:13px;color:#111827;outline:none;resize:none;height:70px;transition:border .18s}
+.rc-import textarea:focus{border-color:#1A3A6B}
+
+/* CSS tap feedback - replaces JS animation listener */
+button:active,.svc-card:active,.mode-card:active,.sided-btn:active,.nb-var:active,.nd-var-card:active,.prod-card:active{transform:scale(0.97);transition:transform .1s}
+
+/* LOGIN SHEET */
+.sh-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:flex-end;justify-content:center}
+.sh-ov.hidden{display:none}
+.sheet{background:#fff;border-radius:22px 22px 0 0;padding:22px 18px 36px;width:100%;max-width:500px;animation:shUp .26s cubic-bezier(.4,0,.2,1)}
+@keyframes shUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sh-handle{width:36px;height:4px;background:#E5E7EB;border-radius:2px;margin:0 auto 20px}
+.sheet h2{font-size:20px;font-weight:800;margin-bottom:4px}
+.sheet .sub{font-size:13px;color:#6B7280;margin-bottom:18px}
+.sheet input{width:100%;background:#F3F4F6;border:1.5px solid #E5E7EB;border-radius:11px;padding:12px 13px;font-family:'Inter',sans-serif;font-size:14px;color:#111827;outline:none;margin-bottom:10px;transition:border .18s}
+.sheet input:focus{border-color:#1A3A6B;background:#fff}
+.sheet input::placeholder{color:#9CA3AF}
+</style>
+</head>
+<body>
+
+<!-- ═══ SPLASH SCREEN ═══ -->
+<div id="splash">
+  <div class="splash-scene" id="splashScene">
+    <div class="splash-feeder"></div>
+    <div class="splash-paper" id="splashPaper">
+      <div class="splash-text">
+        <span>Print</span><span class="x">X</span>
+      </div>
+    </div>
+    <div class="splash-printer"></div>
+    <div class="splash-output"></div>
+  </div>
+  <div class="splash-label">Print<em>X</em></div>
+  <div class="splash-sub">Fast · Smart · Reliable</div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <button class="hbtn" onclick="openDrawer()">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="logo" onclick="showPage('home')">Print<span>X</span></div>
+    <button class="hbtn cart-wrap" onclick="showPage('cart')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      <span class="cart-dot" id="cartCount">0</span>
+    </button>
+  </div>
+</div>
+
+<!-- DRAWER -->
+<div class="d-ov" id="dOv" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-body">
+    <button class="d-item" onclick="showPage('home');closeDrawer()">🏠 Home</button>
+    <button class="d-item" onclick="openPrintPopup('document');closeDrawer()">📤 Upload &amp; Print</button>
+    <button class="d-item" onclick="showPage('products');closeDrawer()">🛍️ Products</button>
+    <button class="d-item" onclick="showPage('cart');closeDrawer()">🛒 Cart</button>
+    <button class="d-item" onclick="openHistoryPopup();closeDrawer()">📋 Order History</button>
+  </div>
+  <div class="drawer-foot">
+    <div class="urow" onclick="openRegPopup(false)">
+      <div class="avatar" id="dAv">?</div>
+      <div><div class="uname" id="dName">Register / Edit Profile</div><div class="usub" id="dSub">Tap to manage account</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ HOME ═══ -->
+<div id="page-home" class="page active">
+  <div class="wrap">
+    <div class="pg-head"><h2>Our Services</h2><p>What would you like to print today?</p></div>
+    <div class="hero">
+      <div class="hero-badge">⚡ Fast • Smart • Reliable</div>
+      <h1>Upload → Print → Receive</h1>
+      <p>Premium printing for notes, photos, cards and custom designs.</p>
+      <button class="btn-a" onclick="openPrintPopup('document')">Start Printing</button>
+    </div>
+    <div class="svc-grid">
+      <div class="svc-card" onclick="openPrintPopup('document')">
+        <span class="svc-icon">📚</span>
+        <div class="svc-name">Document &amp; Notes Printing</div>
+        <div class="svc-price">From ₹1.25/page</div>
+      </div>
+      <div class="svc-card" onclick="openPrintPopup('bw')">
+        <span class="svc-icon">🖤</span>
+        <div class="svc-name">Black &amp; White Print</div>
+        <div class="svc-price">From ₹1.25/page</div>
+      </div>
+      <div class="svc-card" onclick="openPrintPopup('colour')">
+        <span class="svc-icon">🌈</span>
+        <div class="svc-name">4 Colour Print</div>
+        <div class="svc-price">From ₹2.00/page</div>
+      </div>
+      <div class="svc-card" onclick="openPhotoPopup('p1')">
+        <span class="svc-icon">🧍</span>
+        <div class="svc-name">Passport Photo Printing</div>
+        <div class="svc-price">From ₹25/print</div>
+      </div>
+      <div class="svc-card" onclick="openPhotoPopup('ph1')">
+        <span class="svc-icon">🖼️</span>
+        <div class="svc-name">Photo Printing</div>
+        <div class="svc-price">From ₹20/print</div>
+      </div>
+      <div class="svc-card" onclick="openCardPopup()">
+        <span class="svc-icon">💳</span>
+        <div class="svc-name">Visiting Card Printing</div>
+        <div class="svc-price">From ₹250/100pcs</div>
+      </div>
+      <div class="svc-card" onclick="openPosterPopup()">
+        <span class="svc-icon">🗂️</span>
+        <div class="svc-name">Poster Printing</div>
+        <div class="svc-price">From ₹30/piece</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PRODUCTS ═══ -->
+<div id="page-products" class="page">
+  <div class="wrap">
+    <div class="ptitle">Shop</div>
+    <div class="sec-tabs">
+      <button class="sec-tab on" id="tab-stationery" onclick="switchSection('stationery')"><span>📓</span>Products</button>
+      <button class="sec-tab" id="tab-printing" onclick="switchSection('printing')"><span>🖨️</span>Printing</button>
+    </div>
+    <div class="sec-panel on" id="panel-stationery">
+      <div class="sec-label">📦 Notebooks &amp; Stationery</div>
+      <div class="chip-row" id="chipRowStat"></div>
+      <div id="prodListStat"></div>
+    </div>
+    <div class="sec-panel" id="panel-printing">
+      <div class="sec-label">🖨️ Printing Services</div>
+      <div class="chip-row" id="chipRowPrint"></div>
+      <div class="prod-list" id="prodListPrint"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CART ═══ -->
+<div id="page-cart" class="page">
+  <div class="wrap"><div class="ptitle">Cart</div><div id="cartContent"></div></div>
+</div>
+
+<!-- ═══ CHECKOUT ═══ -->
+<div id="page-checkout" class="page">
+  <div class="wrap">
+    <button class="btn-back" onclick="showPage('cart')">← Back to Cart</button>
+    <div class="ptitle">Confirm Order</div>
+    <div class="co-card">
+      <h4>👤 Your Details</h4>
+      <div class="frow"><label class="flabel">Full Name *</label><input class="finp" id="co_n" placeholder="Full name"/></div>
+      <div class="frow"><label class="flabel">C/O</label><input class="finp" id="co_co" placeholder="Care of (optional)"/></div>
+      <div class="frow"><label class="flabel">Phone *</label><input class="finp" id="co_p" type="tel" placeholder="+91 XXXXXXXXXX"/></div>
+      <div class="frow"><label class="flabel">Town / Village *</label><input class="finp" id="co_v" placeholder="Town or village"/></div>
+      <div class="frow"><label class="flabel">Address *</label><input class="finp" id="co_addr" placeholder="House / Street / Landmark"/></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="frow"><label class="flabel">Post Office</label><input class="finp" id="co_po" placeholder="P.O."/></div>
+        <div class="frow"><label class="flabel">Police Station</label><input class="finp" id="co_ps" placeholder="Thana"/></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="frow"><label class="flabel">District *</label><input class="finp" id="co_d" placeholder="District"/></div>
+        <div class="frow"><label class="flabel">Pincode *</label><input class="finp" id="co_pin" type="tel" placeholder="6-digit"/></div>
+      </div>
+    </div>
+    <div class="tot-card" id="coSum"></div>
+    <button class="btn-wa" style="margin-top:14px" onclick="placeOrder()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Send Order via WhatsApp
+    </button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bnav">
+  <button class="bni on" id="bn-home" onclick="showPage('home')"><span class="bni-ico">🏠</span><span>Home</span></button>
+  <button class="bni" id="bn-upload" onclick="openPrintPopup('document')"><span class="bni-ico">📤</span><span>Upload</span></button>
+  <button class="bni" id="bn-products" onclick="showPage('products')"><span class="bni-ico">🛍️</span><span>Products</span></button>
+</div>
+
+<!-- ═══ PRINT POPUP ═══ -->
+<div class="popup-ov" id="printPopupOv" onclick="closePrintPopupOuter(event)">
+  <div class="popup-sheet">
+    <div class="popup-handle"></div>
+    <div class="pp-header">
+      <button class="pp-back" onclick="closePrintPopup()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="pp-title-wrap">
+        <div class="pp-title" id="ppTitle">🖨️ Print Document</div>
+        <div class="pp-sub" id="ppSub">Choose your print settings</div>
+      </div>
+    </div>
+    <div class="pp-body">
+      <div class="pp-step-label"><b>1</b> Print Mode</div>
+      <div class="mode-cards" id="ppModeCards">
+        <div class="mode-card on" id="mcard-bw" onclick="ppSelectMode('bw')">
+          <div class="mode-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="mode-card-inner">
+            <span class="mode-card-icon">🖤</span>
+            <div class="mode-card-name">Black &amp; White</div>
+            <div class="mode-card-price">From ₹1.25/page</div>
+          </div>
+        </div>
+        <div class="mode-card" id="mcard-cl" onclick="ppSelectMode('cl')">
+          <div class="mode-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="mode-card-inner">
+            <span class="mode-card-icon">🌈</span>
+            <div class="mode-card-name">Colour</div>
+            <div class="mode-card-price">From ₹2.00/page</div>
+          </div>
+        </div>
+      </div>
+      <div class="pp-divider"></div>
+      <div class="pp-step-label"><b>2</b> Sided</div>
+      <div class="sided-row">
+        <div class="sided-btn on" id="side-single" onclick="ppSelectSide('single')">
+          Single Sided<small id="sidePrice1">₹1.25/page</small>
+        </div>
+        <div class="sided-btn" id="side-double" onclick="ppSelectSide('double')">
+          Double Sided<small id="sidePrice2">₹1.50/page</small>
+        </div>
+      </div>
+      <div class="pp-divider"></div>
+      <div class="pp-step-label"><b>3</b> Upload File</div>
+      <div class="pp-upzone" id="ppUpzone"
+        ondragover="ppDv(event,'over')" ondragleave="ppDv(event,'leave')" ondrop="ppDv(event,'drop')"
+        onclick="document.getElementById('ppFi').click()">
+        <div class="pp-upzone-icon">☁️</div>
+        <h4>Tap to Choose File</h4>
+        <p>PDF, DOCX, PNG, JPG — up to 50 MB</p>
+        <div class="pp-upzone-btn">Browse Files</div>
+        <input type="file" id="ppFi" accept=".pdf,.docx,.doc,.png,.jpg,.jpeg" style="display:none" onchange="ppHandleFile(this)"/>
+      </div>
+      <div class="pp-prev hidden" id="ppPrev">
+        <div class="pp-prev-row">
+          <span style="font-size:28px" id="ppFileIcon">📄</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="ppFileName"></div>
+            <div id="ppPageBadge" class="pp-page-badge hidden">📄 <span id="ppPageCount">—</span> pages detected</div>
+          </div>
+          <button class="btn-d" onclick="ppClearFile();event.stopPropagation()">Remove</button>
+        </div>
+      </div>
+      <div class="pp-divider"></div>
+      <div class="pp-step-label"><b>4</b> Settings</div>
+      <div class="pp-settings-grid">
+        <div class="frow">
+          <label class="flabel">Paper Size</label>
+          <select class="fsel" id="ppSize" onchange="ppCalc()">
+            <option value="a4">A4 (210×297mm)</option>
+            <option value="a3">A3 (297×420mm)</option>
+            <option value="a5">A5 (148×210mm)</option>
+            <option value="a2">A2 (420×594mm)</option>
+            <option value="a1">A1 (594×841mm)</option>
+            <option value="a6">A6 (105×148mm)</option>
+            <option value="letter">US Letter</option>
+          </select>
+        </div>
+        <div class="frow">
+          <label class="flabel">GSM</label>
+          <select class="fsel" id="ppGsm" onchange="ppCalc()">
+            <option value="70">70 GSM</option>
+            <option value="100">100 GSM +₹0.50</option>
+          </select>
+        </div>
+      </div>
+      <div class="frow">
+        <label class="flabel">Binding</label>
+        <select class="fsel" id="ppBind" onchange="ppCalc()">
+          <option value="none">No Binding</option>
+          <option value="staple">Staple (Free)</option>
+          <option value="spiral70">Spiral — 70 GSM (₹0.40/page)</option>
+          <option value="spiral100">Spiral — 100 GSM (₹0.50/page)</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div>
+          <label class="flabel">Pages</label>
+          <input type="number" class="finp" id="ppPages" value="1" min="1" oninput="ppCalc()"/>
+        </div>
+        <div>
+          <label class="flabel">Copies</label>
+          <div class="qty-row" style="width:100%;justify-content:center">
+            <button class="qbtn" onclick="ppChgQ(-1)">−</button>
+            <span class="qnum" id="ppQv">1</span>
+            <button class="qbtn" onclick="ppChgQ(1)">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="pp-price-box">
+        <div class="pp-prow"><span>Base print cost</span><span id="ppBase">₹0.00</span></div>
+        <div class="pp-prow"><span>GSM extra</span><span id="ppGsmEx">₹0.00</span></div>
+        <div class="pp-prow"><span>Binding</span><span id="ppBindCost">₹0.00</span></div>
+        <div class="pp-prow"><span>Copies</span><span id="ppCopies">× 1</span></div>
+        <div class="pp-ptot"><span>Total</span><span id="ppTotal">₹0.00</span></div>
+      </div>
+      <div class="pp-hint" id="ppHint"></div>
+      <button class="btn-a" onclick="ppAddToCart()">🛒 Add to Cart</button>
+      <button class="btn-o" onclick="closePrintPopup()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PRODUCT DETAIL POPUP ═══ -->
+<div class="popup-ov" id="prodDetailOv" onclick="closeProdDetailOuter(event)">
+  <div class="popup-sheet">
+    <div class="popup-handle"></div>
+    <div class="pp-header">
+      <button class="pp-back" onclick="closeProdDetail()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="pp-title-wrap">
+        <div class="pp-title" id="pdTitle">Product</div>
+        <div class="pp-sub" id="pdSub">Choose quantity</div>
+      </div>
+    </div>
+    <div style="padding:0 20px 0">
+      <div class="pd-hero">
+        <span class="pd-icon" id="pdIcon">📄</span>
+        <div class="pd-name" id="pdName">Product</div>
+        <div class="pd-desc" id="pdDesc">Description</div>
+        <div class="pd-price-badge">₹<span id="pdPrice">0</span> <span id="pdUnit" style="font-size:11px;opacity:.8">per item</span></div>
+      </div>
+      <div class="pd-body" style="padding:0">
+        <!-- Bulk info shown if product has bulk pricing -->
+        <div class="bulk-info" id="pdBulkInfo" style="display:none">
+          <div class="bulk-info-title">📦 Bulk Savings</div>
+          <div id="pdBulkRows"></div>
+        </div>
+        <div class="pd-section">
+          <div class="pd-sec-title">Quantity</div>
+          <div class="pd-qty-row">
+            <div class="pd-qty-label">How many?</div>
+            <div class="qty-row">
+              <button class="qbtn" onclick="pdChgQ(-1)">−</button>
+              <span class="qnum" id="pdQv">1</span>
+              <button class="qbtn" onclick="pdChgQ(1)">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="pd-total-box">
+          <div class="pd-total-label">Total Cost</div>
+          <div class="pd-total-val">₹<span id="pdTotal">0</span></div>
+        </div>
+        <button class="btn-a" onclick="pdAddToCart()">🛒 Add to Cart</button>
+        <button class="btn-o" onclick="closeProdDetail()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ NOTEBOOK DETAIL POPUP ═══ -->
+<div class="popup-ov" id="nbDetailOv" onclick="closeNbDetailOuter(event)">
+  <div class="popup-sheet">
+    <div class="popup-handle"></div>
+    <div class="pp-header">
+      <button class="pp-back" onclick="closeNbDetail()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="pp-title-wrap">
+        <div class="pp-title" id="nbdTitle">Notebook</div>
+        <div class="pp-sub" id="nbdSub">Choose your variant</div>
+      </div>
+    </div>
+    <div style="padding:0 20px 16px">
+      <div class="pd-hero" style="margin:0 0 16px 0">
+        <span class="pd-icon" id="nbdIcon">📒</span>
+        <div class="pd-name" id="nbdName">Notebook</div>
+        <div class="pd-desc" id="nbdType" style="margin-top:4px"></div>
+      </div>
+      <!-- Single / Bulk toggle -->
+      <div class="bulk-toggle-row" id="nbBulkToggle">
+        <button class="bulk-toggle-btn on" id="nbToggleSingle" onclick="nbSetMode('single')">🧾 Single</button>
+        <button class="bulk-toggle-btn" id="nbToggleBulk" onclick="nbSetMode('bulk')">📦 Bulk Pack (×5)</button>
+      </div>
+      <!-- Variant selector -->
+      <div class="pd-sec-title">Choose Variant</div>
+      <div class="nb-detail-variants" id="nbdVariants"></div>
+      <!-- Qty -->
+      <div class="pd-section">
+        <div class="pd-sec-title" id="nbQtyLabel">Quantity</div>
+        <div class="pd-qty-row">
+          <div class="pd-qty-label" id="nbQtyDesc">How many notebooks?</div>
+          <div class="qty-row">
+            <button class="qbtn" onclick="nbdChgQ(-1)">−</button>
+            <span class="qnum" id="nbdQv">1</span>
+            <button class="qbtn" onclick="nbdChgQ(1)">+</button>
+          </div>
+        </div>
+      </div>
+      <!-- Bulk savings -->
+      <div class="bulk-info" id="nbBulkSavings" style="display:none">
+        <div class="bulk-info-title">📦 Bulk Pack Details</div>
+        <div id="nbBulkSavingsRows"></div>
+      </div>
+      <div class="pd-total-box">
+        <div class="pd-total-label" id="nbTotalLabel">Total Cost</div>
+        <div class="pd-total-val">₹<span id="nbdTotal">0</span></div>
+      </div>
+      <button class="btn-a" onclick="nbdAddToCart()">🛒 Add to Cart</button>
+      <button class="btn-o" onclick="closeNbDetail()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ORDER HISTORY POPUP ═══ -->
+<div class="popup-ov" id="historyOv" onclick="closeHistoryOuter(event)">
+  <div class="popup-sheet">
+    <div class="popup-handle"></div>
+    <div class="pp-header">
+      <button class="pp-back" onclick="closeHistoryPopup()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="pp-title-wrap">
+        <div class="pp-title">📋 Order History</div>
+        <div class="pp-sub">Your previous orders</div>
+      </div>
+    </div>
+    <div class="pp-body" id="historyContent" style="padding-bottom:10px"></div>
+  </div>
+</div>
+
+
+<!-- ═══ POSTER POPUP ═══ -->
+<div class="popup-ov" id="posterPopupOv" onclick="if(event.target===this)closePosterPopup()">
+  <div class="popup-sheet">
+    <div class="popup-handle"></div>
+    <div class="pp-header">
+      <button class="pp-back" onclick="closePosterPopup()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="pp-title-wrap">
+        <div class="pp-title">🗂️ Poster Printing</div>
+        <div class="pp-sub">Choose size, colour &amp; upload your design</div>
+      </div>
+    </div>
+    <div class="pp-body">
+      <div class="pp-step-label"><b>1</b> Colour Mode</div>
+      <div class="mode-cards">
+        <div class="mode-card on" id="poster-bw" onclick="posterSelectColor('bw')">
+          <div class="mode-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="mode-card-inner"><span class="mode-card-icon">🖤</span><div class="mode-card-name">Black &amp; White</div><div class="mode-card-price">From ₹30/piece</div></div>
+        </div>
+        <div class="mode-card" id="poster-cl" onclick="posterSelectColor('cl')">
+          <div class="mode-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="mode-card-inner"><span class="mode-card-icon">🌈</span><div class="mode-card-name">Full Colour</div><div class="mode-card-price">From ₹80/piece</div></div>
+        </div>
+      </div>
+      <div class="pp-divider"></div>
+      <div class="pp-step-label"><b>2</b> Poster Size</div>
+      <div class="size-grid" id="posterSizeGrid">
+        <div class="size-btn on" data-size="A4" onclick="posterSelectSize(this,'A4')">A4<small>210×297mm</small></div>
+        <div class="size-btn" data-size="A3" onclick="posterSelectSize(this,'A3')">A3<small>297×420mm</small></div>
+        <div class="size-btn" data-size="A2" onclick="posterSelectSize(this,'A2')">A2<small>420×594mm</small></div>
+        <div class="size-btn" data-size="A5" onclick="posterSelectSize(this,'A5')">A5<small>148×210mm</small></div>
+        <div class="size-btn" data-size="A1" onclick="posterSelectSize(this,'A1')">A1<small>594×841mm</small></div>
+        <div class="size-btn" data-size="A0" onclick="posterSelectSize(this,'A0')">A0<small>841×1189mm</small></div>
+      </div>
+      <div class="pp-divider"></div>
+      <div class="pp-step-label"><b>3</b> Upload Design</div>
+      <div class="pp-upzone" id="posterUpzone"
+        ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')"
+        ondrop="posterHandleDrop(event)" onclick="document.getElementById('posterFi').click()">
+        <div class="pp-upzone-icon">🖼️</div>
+        <h4>Tap to Upload Design</h4>
+        <p>PDF, PNG, JPG — up to 50 MB</p>
+        <div class="pp-upzone-btn">Browse Files</div>
+        <input type="file" id="posterFi" accept=".pdf,.png,.jpg,.jpeg" style="display:none" onchange="posterHandleFile(this)"/>
+      </div>
+      <div class="pp-prev hidden" id="posterPrev">
+        <div class="pp-prev-row">
+          <span style="font-size:28px" id="posterFileIcon">🖼️</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="posterFileName"></div>
+            <div style="font-size:11px;color:#6B7280;margin-top:3px" id="posterFileSz"></div>
+          </div>
+          <button class="btn-d" onclick="posterClearFile();event.stopPropagation()">Remove</button>
+        </div>
+      </div>
+      <div class="pp-divider"></div>
+      <div class="pp-step-label"><b>4</b> Quantity</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;background:#F3F4F6;border-radius:14px;padding:12px 16px;margin-bottom:16px">
+        <span style="font-size:14px;font-weight:600">Number of copies</span>
+        <div class="qty-row">
+          <button class="qbtn" onclick="posterChgQ(-1)">−</button>
+          <span class="qnum" id="posterQv">1</span>
+          <button class="qbtn" onclick="posterChgQ(1)">+</button>
+        </div>
+      </div>
+      <div class="pp-price-box">
+        <div class="pp-prow"><span>Size</span><span id="posterSizeLabel">A4</span></div>
+        <div class="pp-prow"><span>Colour mode</span><span id="posterColorLabel">Black &amp; White</span></div>
+        <div class="pp-prow"><span>Price per piece</span><span id="posterPriceEach">₹30.00</span></div>
+        <div class="pp-prow"><span>Copies</span><span id="posterCopiesLabel">× 1</span></div>
+        <div class="pp-ptot"><span>Total</span><span id="posterTotal">₹30.00</span></div>
+      </div>
+      <button class="btn-a" onclick="posterAddToCart()">🛒 Add to Cart</button>
+      <button class="btn-o" onclick="closePosterPopup()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PHOTO POPUP ═══ -->
+<div class="popup-ov" id="photoPopupOv" onclick="if(event.target===this)closePhotoPopup()">
+  <div class="popup-sheet">
+    <div class="popup-handle"></div>
+    <div class="pp-header">
+      <button class="pp-back" onclick="closePhotoPopup()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="pp-title-wrap">
+        <div class="pp-title" id="photoPopupTitle">🖼️ Photo Printing</div>
+        <div class="pp-sub" id="photoPopupSub">Upload &amp; configure your photo print</div>
+      </div>
+    </div>
+    <div class="pp-body">
+      <div class="pp-step-label"><b>1</b> Print Size</div>
+      <div class="size-grid" id="photoSizeGrid">
+        <div class="size-btn on" data-size="4×6" onclick="photoSelectSize(this,'4×6',20)">4×6<small>10×15cm</small></div>
+        <div class="size-btn" data-size="5×7" onclick="photoSelectSize(this,'5×7',35)">5×7<small>13×18cm</small></div>
+        <div class="size-btn" data-size="A4" onclick="photoSelectSize(this,'A4',60)">A4<small>21×29.7cm</small></div>
+        <div class="size-btn" data-size="A5" onclick="photoSelectSize(this,'A5',40)">A5<small>14.8×21cm</small></div>
+        <div class="size-btn" data-size="A3" onclick="photoSelectSize(this,'A3',120)">A3<small>29.7×42cm</small></div>
+        <div class="size-btn" data-size="2×2" onclick="photoSelectSize(this,'2×2',25)">2×2<small>Passport</small></div>
+      </div>
+      <div class="pp-divider"></div>
+      <div class="pp-step-label"><b>2</b> Colour Mode</div>
+      <div class="mode-cards">
+        <div class="mode-card" id="photo-bw" onclick="photoSelectColor('bw')">
+          <div class="mode-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="mode-card-inner"><span class="mode-card-icon">🖤</span><div class="mode-card-name">Black &amp; White</div><div class="mode-card-price">-₹5 discount</div></div>
+        </div>
+        <div class="mode-card on" id="photo-cl" onclick="photoSelectColor('cl')">
+          <div class="mode-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="mode-card-inner"><span class="mode-card-icon">🌈</span><div class="mode-card-name">Full Colour</div><div class="mode-card-price">Standard rate</div></div>
+        </div>
+      </div>
+      <div class="pp-divider"></div>
+      <div class="pp-step-label"><b>3</b> Upload Photo</div>
+      <div class="pp-upzone" id="photoUpzone"
+        ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')"
+        ondrop="photoHandleDrop(event)" onclick="document.getElementById('photoFi').click()">
+        <div class="pp-upzone-icon">📸</div>
+        <h4>Tap to Upload Photo</h4>
+        <p>PNG, JPG, HEIC — up to 50 MB</p>
+        <div class="pp-upzone-btn">Browse Photos</div>
+        <input type="file" id="photoFi" accept=".png,.jpg,.jpeg,.heic,.webp" style="display:none" onchange="photoHandleFile(this)"/>
+      </div>
+      <div class="pp-prev hidden" id="photoPrev">
+        <div class="pp-prev-row">
+          <span style="font-size:28px">🖼️</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="photoFileName"></div>
+            <div style="font-size:11px;color:#6B7280;margin-top:3px" id="photoFileSz"></div>
+          </div>
+          <button class="btn-d" onclick="photoClearFile();event.stopPropagation()">Remove</button>
+        </div>
+      </div>
+      <div class="pp-divider"></div>
+      <div class="pp-step-label"><b>4</b> Copies</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;background:#F3F4F6;border-radius:14px;padding:12px 16px;margin-bottom:16px">
+        <span style="font-size:14px;font-weight:600">Number of prints</span>
+        <div class="qty-row">
+          <button class="qbtn" onclick="photoChgQ(-1)">−</button>
+          <span class="qnum" id="photoQv">1</span>
+          <button class="qbtn" onclick="photoChgQ(1)">+</button>
+        </div>
+      </div>
+      <div class="pp-price-box">
+        <div class="pp-prow"><span>Size</span><span id="photoSizeLabel">4×6</span></div>
+        <div class="pp-prow"><span>Colour</span><span id="photoColorLabel">Full Colour</span></div>
+        <div class="pp-prow"><span>Price per print</span><span id="photoPriceEach">₹20.00</span></div>
+        <div class="pp-prow"><span>Copies</span><span id="photoCopiesLabel">× 1</span></div>
+        <div class="pp-ptot"><span>Total</span><span id="photoTotal">₹20.00</span></div>
+      </div>
+      <button class="btn-a" onclick="photoAddToCart()">🛒 Add to Cart</button>
+      <button class="btn-o" onclick="closePhotoPopup()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ VISITING CARD POPUP ═══ -->
+<div class="popup-ov" id="cardPopupOv" onclick="if(event.target===this)closeCardPopup()">
+  <div class="popup-sheet">
+    <div class="popup-handle"></div>
+    <div class="pp-header">
+      <button class="pp-back" onclick="closeCardPopup()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="pp-title-wrap">
+        <div class="pp-title">💳 Visiting Card Printing</div>
+        <div class="pp-sub">Premium 350gsm cards</div>
+      </div>
+    </div>
+    <div class="pp-body">
+      <div class="pp-step-label"><b>1</b> Colour Mode</div>
+      <div class="mode-cards">
+        <div class="mode-card" id="card-bw" onclick="cardSelectColor('bw')">
+          <div class="mode-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="mode-card-inner"><span class="mode-card-icon">🖤</span><div class="mode-card-name">Black &amp; White</div><div class="mode-card-price">-20% discount</div></div>
+        </div>
+        <div class="mode-card on" id="card-cl" onclick="cardSelectColor('cl')">
+          <div class="mode-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="mode-card-inner"><span class="mode-card-icon">🌈</span><div class="mode-card-name">Full Colour</div><div class="mode-card-price">Standard rate</div></div>
+        </div>
+      </div>
+      <div class="pp-divider"></div>
+      <div class="pp-step-label"><b>2</b> Quantity</div>
+      <div class="sided-row">
+        <div class="sided-btn on" id="cqty-100" onclick="cardSelectQty(100,250,'cqty-100')">×100 Cards<small>₹250</small></div>
+        <div class="sided-btn" id="cqty-500" onclick="cardSelectQty(500,900,'cqty-500')">×500 Cards<small>₹900</small></div>
+      </div>
+      <div class="pp-divider"></div>
+      <div class="pp-step-label"><b>3</b> Upload Design</div>
+      <div class="pp-upzone" id="cardUpzone"
+        ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')"
+        ondrop="cardHandleDrop(event)" onclick="document.getElementById('cardFi').click()">
+        <div class="pp-upzone-icon">💳</div>
+        <h4>Upload Card Design</h4>
+        <p>PDF, PNG, JPG, AI — up to 50 MB</p>
+        <div class="pp-upzone-btn">Browse Files</div>
+        <input type="file" id="cardFi" accept=".pdf,.png,.jpg,.jpeg,.ai" style="display:none" onchange="cardHandleFile(this)"/>
+      </div>
+      <div class="pp-prev hidden" id="cardPrev">
+        <div class="pp-prev-row">
+          <span style="font-size:28px">💳</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="cardFileName"></div>
+            <div style="font-size:11px;color:#6B7280;margin-top:3px" id="cardFileSz"></div>
+          </div>
+          <button class="btn-d" onclick="cardClearFile();event.stopPropagation()">Remove</button>
+        </div>
+      </div>
+      <div class="pp-divider"></div>
+      <div class="pp-step-label"><b>4</b> Sets</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;background:#F3F4F6;border-radius:14px;padding:12px 16px;margin-bottom:16px">
+        <span style="font-size:14px;font-weight:600">Number of sets</span>
+        <div class="qty-row">
+          <button class="qbtn" onclick="cardChgQ(-1)">−</button>
+          <span class="qnum" id="cardQv">1</span>
+          <button class="qbtn" onclick="cardChgQ(1)">+</button>
+        </div>
+      </div>
+      <div class="pp-price-box">
+        <div class="pp-prow"><span>Cards per set</span><span id="cardQtyLabel">100</span></div>
+        <div class="pp-prow"><span>Colour</span><span id="cardColorLabel">Full Colour</span></div>
+        <div class="pp-prow"><span>Price per set</span><span id="cardPriceEach">₹250.00</span></div>
+        <div class="pp-prow"><span>Sets</span><span id="cardSetsLabel">× 1</span></div>
+        <div class="pp-ptot"><span>Total</span><span id="cardTotal">₹250.00</span></div>
+      </div>
+      <button class="btn-a" onclick="cardAddToCart()">🛒 Add to Cart</button>
+      <button class="btn-o" onclick="closeCardPopup()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CUSTOM DESIGN POPUP ═══ -->
+<div class="popup-ov" id="customPopupOv" onclick="if(event.target===this)closeCustomPopup()">
+  <div class="popup-sheet">
+    <div class="popup-handle"></div>
+    <div class="pp-header">
+      <button class="pp-back" onclick="closeCustomPopup()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="pp-title-wrap">
+        <div class="pp-title">✨ Custom Design &amp; Print</div>
+        <div class="pp-sub">We design it for you</div>
+      </div>
+    </div>
+    <div class="pp-body">
+      <div class="pp-step-label"><b>1</b> Colour Mode</div>
+      <div class="mode-cards">
+        <div class="mode-card" id="custom-bw" onclick="customSelectColor('bw')">
+          <div class="mode-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="mode-card-inner"><span class="mode-card-icon">🖤</span><div class="mode-card-name">Black &amp; White</div><div class="mode-card-price">From ₹150</div></div>
+        </div>
+        <div class="mode-card on" id="custom-cl" onclick="customSelectColor('cl')">
+          <div class="mode-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="mode-card-inner"><span class="mode-card-icon">🌈</span><div class="mode-card-name">Full Colour</div><div class="mode-card-price">From ₹200</div></div>
+        </div>
+      </div>
+      <div class="pp-divider"></div>
+      <div class="pp-step-label"><b>2</b> Print Size</div>
+      <div class="size-grid" id="customSizeGrid">
+        <div class="size-btn on" data-size="A4" onclick="customSelectSize(this,'A4')">A4<small>210×297mm</small></div>
+        <div class="size-btn" data-size="A3" onclick="customSelectSize(this,'A3')">A3<small>297×420mm</small></div>
+        <div class="size-btn" data-size="A2" onclick="customSelectSize(this,'A2')">A2<small>420×594mm</small></div>
+        <div class="size-btn" data-size="A5" onclick="customSelectSize(this,'A5')">A5<small>148×210mm</small></div>
+        <div class="size-btn" data-size="A1" onclick="customSelectSize(this,'A1')">A1<small>594×841mm</small></div>
+        <div class="size-btn" data-size="Card" onclick="customSelectSize(this,'Card')">Card<small>90×55mm</small></div>
+      </div>
+      <div class="pp-divider"></div>
+      <div class="pp-step-label"><b>3</b> Reference File <span style="font-weight:400;color:#9CA3AF">(optional)</span></div>
+      <div class="pp-upzone" id="customUpzone"
+        ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')"
+        ondrop="customHandleDrop(event)" onclick="document.getElementById('customFi').click()">
+        <div class="pp-upzone-icon">✨</div>
+        <h4>Upload Reference / Content</h4>
+        <p>PDF, PNG, JPG, DOCX — up to 50 MB</p>
+        <div class="pp-upzone-btn">Browse Files</div>
+        <input type="file" id="customFi" accept=".pdf,.png,.jpg,.jpeg,.docx,.doc" style="display:none" onchange="customHandleFile(this)"/>
+      </div>
+      <div class="pp-prev hidden" id="customPrev">
+        <div class="pp-prev-row">
+          <span style="font-size:28px">✨</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="customFileName"></div>
+            <div style="font-size:11px;color:#6B7280;margin-top:3px" id="customFileSz"></div>
+          </div>
+          <button class="btn-d" onclick="customClearFile();event.stopPropagation()">Remove</button>
+        </div>
+      </div>
+      <div class="pp-divider"></div>
+      <div class="pp-step-label"><b>4</b> Copies</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;background:#F3F4F6;border-radius:14px;padding:12px 16px;margin-bottom:16px">
+        <span style="font-size:14px;font-weight:600">Number of copies</span>
+        <div class="qty-row">
+          <button class="qbtn" onclick="customChgQ(-1)">−</button>
+          <span class="qnum" id="customQv">1</span>
+          <button class="qbtn" onclick="customChgQ(1)">+</button>
+        </div>
+      </div>
+      <div class="pp-price-box">
+        <div class="pp-prow"><span>Size</span><span id="customSizeLabel">A4</span></div>
+        <div class="pp-prow"><span>Colour</span><span id="customColorLabel">Full Colour</span></div>
+        <div class="pp-prow"><span>Base price</span><span id="customPriceEach">₹200.00</span></div>
+        <div class="pp-prow"><span>Copies</span><span id="customCopiesLabel">× 1</span></div>
+        <div class="pp-ptot"><span>Total</span><span id="customTotal">₹200.00</span></div>
+      </div>
+      <div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#92400E">
+        💡 We will contact you via WhatsApp to discuss your design requirements after order.
+      </div>
+      <button class="btn-a" onclick="customAddToCart()">🛒 Add to Cart</button>
+      <button class="btn-o" onclick="closeCustomPopup()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ REGISTRATION POPUP ═══ -->
+<div class="reg-ov" id="regOv" onclick="closeRegOuter(event)">
+  <div class="reg-sheet">
+    <div class="reg-handle"></div>
+    <div class="rc-import" id="rcImportBox">
+      <h4>🔑 Have a Recovery Code?</h4>
+      <textarea id="rcInput" placeholder="Paste your recovery code here..."></textarea>
+      <button class="btn-p full" style="margin-top:10px;padding:11px" onclick="importRecoveryCode()">Restore My Data</button>
+    </div>
+    <div style="text-align:center;font-size:12px;color:#9CA3AF;margin-bottom:16px">— or fill in your details below —</div>
+    <div class="reg-badge" id="regStatusBadge">📝 New Registration</div>
+    <div style="font-size:19px;font-weight:800;margin-bottom:4px;color:#111827" id="regTitle">Create Your Account</div>
+    <div style="font-size:13px;color:#6B7280;margin-bottom:18px">Your details are saved locally on this device</div>
+    <input class="reg-input" id="rg_n" placeholder="Full Name *"/>
+    <input class="reg-input" id="rg_co" placeholder="C/O (optional)"/>
+    <input class="reg-input" id="rg_ph" type="tel" placeholder="Phone Number *"/>
+    <input class="reg-input" id="rg_v" placeholder="Town / Village *"/>
+    <input class="reg-input" id="rg_addr" placeholder="Address (House / Street / Landmark) *"/>
+    <div class="reg-grid">
+      <input class="reg-input" id="rg_po" placeholder="Post Office" style="margin-bottom:0"/>
+      <input class="reg-input" id="rg_ps" placeholder="Police Station" style="margin-bottom:0"/>
+    </div>
+    <div class="reg-grid" style="margin-top:11px">
+      <input class="reg-input" id="rg_d" placeholder="District *" style="margin-bottom:0"/>
+      <input class="reg-input" id="rg_pin" type="tel" placeholder="Pincode *" style="margin-bottom:0"/>
+    </div>
+    <button class="btn-a" style="margin-top:18px" onclick="doRegister()">✅ Save &amp; Continue</button>
+    <button class="btn-o" onclick="closeReg()">Cancel</button>
+    <div class="rc-box hidden" id="rcDisplayBox">
+      <div class="rc-label">🔐 Your Recovery Code — save this!</div>
+      <div class="rc-code" id="rcCodeDisplay"></div>
+      <div class="rc-btns">
+        <button class="rc-btn" onclick="copyRecoveryCode()">📋 Copy Code</button>
+        <button class="rc-btn outline" onclick="shareRecoveryCode()">📤 Share</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Message float -->
+<button class="msg-float" onclick="window.open('https://wa.me/917029893407?text=Hello%20PrintX%2C%20I%20need%20help!','_blank')" title="Message us">
+  <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+</button>
+
+<div id="toast"></div>
+
+<script>
+const WA_NUM='917029893407';
+
+// ══ SPLASH ANIMATION ══
+(function(){
+  const paper=document.getElementById('splashPaper');
+  const scene=document.getElementById('splashScene');
+  function animSplash(){
+    scene.classList.remove('printed');
+    paper.style.transition='none';
+    paper.style.top='-25px';
+    paper.offsetHeight;
+    paper.style.transition='top 3.2s cubic-bezier(0.45,0.05,0.55,0.95)';
+    paper.style.top='150px';
+    setTimeout(()=>scene.classList.add('printed'),1400);
+  }
+  animSplash();
+  const loop=setInterval(animSplash,4200);
+  // Hide splash after 2.8s
+  setTimeout(()=>{
+    const s=document.getElementById('splash');
+    s.classList.add('hide');
+    setTimeout(()=>{s.style.display='none';clearInterval(loop);},600);
+  },2800);
+})();
+
+// ══ DATA ══
+const PRINT_PRODS=[
+  {id:'d1',cat:'document',name:'Document & Notes Print',icon:'📄',price:1.25,unit:'per page',desc:'B&W or Colour document printing',hasPrintPopup:true},
+  {id:'p1',cat:'passport',name:'Passport Photo 2×2 Inches',icon:'🧍',price:25,unit:'per print',desc:'Standard 2×2 inch passport photos',hasPhotoPopup:true},
+  {id:'ph1',cat:'photo',name:'Photo Print',icon:'🖼️',price:60,unit:'per print',desc:'High-gloss photo prints, multiple sizes',hasPhotoPopup:true},
+  {id:'c1',cat:'cards',name:'Visiting Cards',icon:'💳',price:250,unit:'per 100',desc:'Premium 350gsm visiting cards',hasCardPopup:true},
+  {id:'pl1',cat:'plastic',name:'Plastic Sheet Print',icon:'🛡️',price:120,unit:'per print',desc:'Durable photo on PVC plastic',hasPhotoPopup:true},
+  {id:'pl2',cat:'plastic',name:'ID Card Plastic',icon:'🪪',price:60,unit:'per card',desc:'Laminated ID card print',hasPhotoPopup:true},
+  {id:'cu1',cat:'custom',name:'Custom Design & Print',icon:'✨',price:200,unit:'from',desc:'We design it for you',hasCustomPopup:true},
+  {id:'poster',cat:'poster',name:'Poster Printing',icon:'🗂️',price:80,unit:'per piece',desc:'Full-colour or B&W poster, multiple sizes',hasPosterPopup:true},
+];
+const PRINT_CATS=[{k:'all',l:'All'},{k:'document',l:'Documents'},{k:'passport',l:'Passport'},{k:'photo',l:'Photos'},{k:'cards',l:'Cards'},{k:'plastic',l:'Plastic'},{k:'poster',l:'Poster'},{k:'custom',l:'Custom'}];
+
+// Updated notebook pricing
+const NOTEBOOKS=[
+  {id:'nb1',name:'A4 Spiral Notebook',icon:'🗒️',size:'A4',premium:false,
+    variants:[
+      {pages:100,price:70,bulkPrice:325,bulkQty:5},
+      {pages:200,price:125,bulkPrice:500,bulkQty:5}
+    ]
+  },
+  {id:'nb2',name:'A4 Premium Spiral Notebook',icon:'📒',size:'A4',premium:true,
+    variants:[
+      {pages:100,price:90,bulkPrice:410,bulkQty:5},
+      {pages:200,price:165,bulkPrice:800,bulkQty:5}
+    ]
+  },
+  {id:'nb3',name:'A5 Spiral Notebook',icon:'🗒️',size:'A5',premium:false,
+    variants:[
+      {pages:100,price:40,bulkPrice:175,bulkQty:5},
+      {pages:200,price:65,bulkPrice:300,bulkQty:5}
+    ]
+  },
+  {id:'nb4',name:'A5 Premium Spiral Notebook',icon:'📔',size:'A5',premium:true,
+    variants:[
+      {pages:100,price:55,bulkPrice:250,bulkQty:5},
+      {pages:200,price:90,bulkPrice:425,bulkQty:5}
+    ]
+  },
+];
+const STAT_CATS=[{k:'all',l:'All'},{k:'A4',l:'A4 Notebooks'},{k:'A5',l:'A5 Notebooks'},{k:'sheets',l:'A4 Sheets'}];
+const BLANK_A4={id:'ba4',name:'Blank A4 Paper',icon:'📃',size:'A4',premium:false,isSheet:true,
+  variants:[
+    {pages:100,price:60,bulkPrice:null,bulkQty:null},
+    {pages:500,price:275,bulkPrice:null,bulkQty:null}
+  ]
+};
+const SHEET_PRODS=[
+  {id:'s9',cat:'sheets',name:'Colored A4 Sheets (50)',icon:'🎨',price:60,unit:'per pack',desc:'Assorted colors, 80gsm, 50 sheets'},
+  {id:'s10',cat:'sheets',name:'Graph Paper A4 (100)',icon:'📐',price:55,unit:'per pack',desc:'5mm grid, 80gsm, 100 sheets'},
+];
+const PRODS=[...PRINT_PRODS,...SHEET_PRODS];
+
+let cart=[],user=null,orders=[];
+let ppFile=null,ppQty=1,ppMode='bw',ppSide='single',regCallback=null;
+
+// Current product detail state
+let curProd=null,curProdQty=1;
+// Current notebook detail state
+let curNb=null,curNbVariantIdx=0,curNbQty=1,curNbMode='single';
+
+// ══ NAV ══
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.bni').forEach(b=>b.classList.remove('on'));
+  const bn=document.getElementById('bn-'+id);if(bn)bn.classList.add('on');
+  if(id==='products')switchSection('stationery');
+  if(id==='cart')renderCart();
+  if(id==='checkout')renderCoSum();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function openDrawer(){document.getElementById('drawer').classList.add('on');document.getElementById('dOv').classList.add('on')}
+function closeDrawer(){document.getElementById('drawer').classList.remove('on');document.getElementById('dOv').classList.remove('on')}
+
+// ══ PRODUCTS ══
+let curSection='stationery';
+function switchSection(sec){
+  curSection=sec;
+  document.querySelectorAll('.sec-tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.sec-panel').forEach(p=>p.classList.remove('on'));
+  document.getElementById('tab-'+sec).classList.add('on');
+  document.getElementById('panel-'+sec).classList.add('on');
+  if(sec==='stationery')renderStatProds('all');
+  else renderPrintProds('all');
+}
+function renderPrintProds(f){
+  const chipEl=document.getElementById('chipRowPrint'),listEl=document.getElementById('prodListPrint');
+  chipEl.innerHTML=PRINT_CATS.map(c=>`<button class="chip${f===c.k?' on':''}" onclick="renderPrintProds('${c.k}')">${c.l}</button>`).join('');
+  const list=f==='all'?PRINT_PRODS:PRINT_PRODS.filter(p=>p.cat===f);
+  listEl.innerHTML=list.map(p=>{
+    let action;
+    if(p.hasPrintPopup) action="openPrintPopup('document')";
+    else if(p.hasPosterPopup) action="openPosterPopup()";
+    else if(p.hasPhotoPopup) action="openPhotoPopup('"+p.id+"')";
+    else if(p.hasCardPopup) action="openCardPopup()";
+    else if(p.hasCustomPopup) action="openCustomPopup()";
+    else action="openProdDetail('"+p.id+"')";
+    return `<div class="prod-card" onclick="${action}">
+      <div class="prod-ico">${p.icon}</div>
+      <div class="prod-info">
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-desc">${p.desc}</div>
+        <div class="prod-price">&#x20B9;${p.price} <span style="font-size:11px;color:#6B7280">${p.unit}</span></div>
+      </div>
+      <button class="add-btn" onclick="event.stopPropagation();${action}">Configure</button>
+    </div>`;
+  }).join('');
+}
+function renderStatProds(f){
+  const chipEl=document.getElementById('chipRowStat'),listEl=document.getElementById('prodListStat');
+  chipEl.innerHTML=STAT_CATS.map(c=>`<button class="chip${f===c.k?' on':''}" onclick="renderStatProds('${c.k}')">${c.l}</button>`).join('');
+  let html='';
+  const nbs=f==='all'?NOTEBOOKS:(f==='sheets'?[]:NOTEBOOKS.filter(n=>n.size===f));
+  nbs.forEach(nb=>{
+    html+=`<div class="nb-card">
+      <div class="nb-header">
+        <div class="nb-ico">${nb.icon}</div>
+        <div>
+          <div class="nb-name">${nb.name}</div>
+          <div style="font-size:11px;color:#6B7280;margin-top:2px">${nb.premium?'🌟 Premium':'Standard'} · Spiral Bound</div>
+        </div>
+      </div>
+      <div class="nb-variants">
+        ${nb.variants.map((v,vi)=>`
+          <div class="nb-var" onclick="openNbDetail('${nb.id}',${vi})">
+            <div class="nb-var-pg">${v.pages} Pages</div>
+            <div class="nb-var-price">₹${v.price}</div>
+            <div class="nb-var-bulk">Pack of ${v.bulkQty} → ₹${v.bulkPrice}</div>
+            <button class="nb-var-btn" onclick="event.stopPropagation();openNbDetail('${nb.id}',${vi})">Add Single</button>
+            <button class="nb-bulk-btn" onclick="event.stopPropagation();openNbDetail('${nb.id}',${vi},'bulk')">📦 Bulk Pack</button>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  });
+  if(f==='all'||f==='sheets'){
+    html+=`<div class="nb-card">
+      <div class="nb-header">
+        <div class="nb-ico">${BLANK_A4.icon}</div>
+        <div>
+          <div class="nb-name">${BLANK_A4.name}</div>
+          <div style="font-size:11px;color:#6B7280;margin-top:2px">Plain white 80gsm A4 sheets</div>
+        </div>
+      </div>
+      <div class="nb-variants">
+        ${BLANK_A4.variants.map((v,vi)=>`
+          <div class="nb-var" onclick="openNbDetail('ba4',${vi})">
+            <div class="nb-var-pg">${v.pages} Sheets</div>
+            <div class="nb-var-price">&#x20B9;${v.price}</div>
+            <div class="nb-var-bulk" style="color:#9CA3AF">per pack</div>
+            <button class="nb-var-btn" onclick="event.stopPropagation();openNbDetail('ba4',${vi})">Add</button>
+          </div>`).join('')}
+      </div>
+    </div>`;
+    SHEET_PRODS.forEach(p=>{
+      html+=`<div class="prod-card"><div class="prod-ico">${p.icon}</div><div class="prod-info"><div class="prod-name">${p.name}</div><div class="prod-desc">${p.desc}</div><div class="prod-price">&#x20B9;${p.price} <span style="font-size:11px;color:#6B7280">${p.unit}</span></div></div><button class="add-btn" onclick="openProdDetail('${p.id}')">Add</button></div>`;
+    });
+  }
+  listEl.innerHTML=html;
+}
+
+// ══ PRODUCT DETAIL POPUP ══
+function openProdDetail(id){
+  curProd=PRODS.find(x=>x.id===id);
+  if(!curProd)return;
+  curProdQty=1;
+  document.getElementById('pdTitle').textContent=curProd.name;
+  document.getElementById('pdSub').textContent=curProd.desc;
+  document.getElementById('pdIcon').textContent=curProd.icon;
+  document.getElementById('pdName').textContent=curProd.name;
+  document.getElementById('pdDesc').textContent=curProd.desc;
+  document.getElementById('pdPrice').textContent=curProd.price;
+  document.getElementById('pdUnit').textContent=curProd.unit;
+  document.getElementById('pdQv').textContent='1';
+  document.getElementById('pdTotal').textContent=curProd.price.toFixed(2);
+  // Bulk info for visiting cards
+  const bulkInfo=document.getElementById('pdBulkInfo');
+  const bulkRows=document.getElementById('pdBulkRows');
+  if(curProd.cat==='cards'){
+    bulkInfo.style.display='block';
+    bulkRows.innerHTML=`
+      <div class="bulk-row"><span>×100 cards</span><span>₹250 <span class="bulk-tag">SAVE</span></span></div>
+      <div class="bulk-row"><span>×500 cards</span><span>₹900 <span class="bulk-tag">BEST VALUE</span></span></div>`;
+  } else {bulkInfo.style.display='none';}
+  document.getElementById('prodDetailOv').classList.add('on');
+}
+function closeProdDetail(){document.getElementById('prodDetailOv').classList.remove('on')}
+function closeProdDetailOuter(e){if(e.target===document.getElementById('prodDetailOv'))closeProdDetail()}
+function pdChgQ(d){
+  curProdQty=Math.max(1,curProdQty+d);
+  document.getElementById('pdQv').textContent=curProdQty;
+  document.getElementById('pdTotal').textContent=(curProd.price*curProdQty).toFixed(2);
+}
+function pdAddToCart(){
+  if(!curProd)return;
+  cart.push({id:Date.now(),name:curProd.name,icon:curProd.icon,price:curProd.price*curProdQty,qty:curProdQty,each:curProd.price,settings:{size:'—',color:'—',binding:'—',pages:1}});
+  updCnt();saveData();toast('✅ '+curProd.name+' added!','ok');closeProdDetail();
+}
+
+// ══ NOTEBOOK DETAIL POPUP ══
+function openNbDetail(nbId,varIdx,mode){
+  curNb=(nbId==='ba4')?BLANK_A4:NOTEBOOKS.find(x=>x.id===nbId);
+  if(!curNb)return;
+  curNbVariantIdx=varIdx||0;
+  curNbQty=1;
+  curNbMode=mode||'single';
+  document.getElementById('nbdTitle').textContent=curNb.name;
+  document.getElementById('nbdIcon').textContent=curNb.icon;
+  document.getElementById('nbdName').textContent=curNb.name;
+  document.getElementById('nbdType').textContent=curNb.isSheet?'Plain white 80gsm A4 sheets':((curNb.premium?'🌟 Premium':'Standard')+' · Spiral Bound · Size: '+curNb.size);
+  // Hide bulk toggle for sheets
+  document.getElementById('nbBulkToggle').style.display=curNb.isSheet?'none':'flex';
+  renderNbVariants();
+  nbSetMode(curNbMode);
+  document.getElementById('nbDetailOv').classList.add('on');
+}
+function closeNbDetail(){document.getElementById('nbDetailOv').classList.remove('on')}
+function closeNbDetailOuter(e){if(e.target===document.getElementById('nbDetailOv'))closeNbDetail()}
+
+function renderNbVariants(){
+  const el=document.getElementById('nbdVariants');
+  el.innerHTML=curNb.variants.map((v,i)=>`
+    <div class="nd-var-card${i===curNbVariantIdx?' on':''}" onclick="nbSelectVariant(${i})">
+      <div class="nd-var-left">
+        <div class="nd-var-pages">${v.pages} Pages</div>
+        <div class="nd-var-price">₹${curNbMode==='bulk'?v.bulkPrice:v.price}</div>
+        <div class="nd-var-bulk">${curNbMode==='bulk'?'Pack of '+v.bulkQty+' notebooks':'Single notebook'}</div>
+      </div>
+      <div class="nd-check">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+    </div>`).join('');
+  updateNbTotal();
+}
+function nbSelectVariant(idx){
+  curNbVariantIdx=idx;
+  renderNbVariants();
+}
+function nbSetMode(mode){
+  curNbMode=mode;
+  document.getElementById('nbToggleSingle').classList.toggle('on',mode==='single');
+  document.getElementById('nbToggleBulk').classList.toggle('on',mode==='bulk');
+  const v=curNb.variants[curNbVariantIdx];
+  const bulkBox=document.getElementById('nbBulkSavings');
+  const bulkRows=document.getElementById('nbBulkSavingsRows');
+  if(mode==='bulk'){
+    bulkBox.style.display='block';
+    bulkRows.innerHTML=curNb.variants.map(vv=>`
+      <div class="bulk-row">
+        <span>${vv.pages}pg — Pack of ${vv.bulkQty}</span>
+        <span>₹${vv.bulkPrice} <span class="bulk-tag">SAVE ${Math.round((vv.price*vv.bulkQty-vv.bulkPrice)/vv.price*100)}%</span></span>
+      </div>`).join('');
+    document.getElementById('nbQtyDesc').textContent='How many packs?';
+    document.getElementById('nbTotalLabel').textContent='Total Cost (Pack)';
+  } else {
+    bulkBox.style.display='none';
+    document.getElementById('nbQtyDesc').textContent='How many notebooks?';
+    document.getElementById('nbTotalLabel').textContent='Total Cost';
+  }
+  curNbQty=1;
+  document.getElementById('nbdQv').textContent='1';
+  renderNbVariants();
+}
+function nbdChgQ(d){
+  curNbQty=Math.max(1,curNbQty+d);
+  document.getElementById('nbdQv').textContent=curNbQty;
+  updateNbTotal();
+}
+function updateNbTotal(){
+  if(!curNb)return;
+  const v=curNb.variants[curNbVariantIdx];
+  const price=curNbMode==='bulk'?v.bulkPrice:v.price;
+  document.getElementById('nbdTotal').textContent=(price*curNbQty).toFixed(2);
+}
+function nbdAddToCart(){
+  if(!curNb)return;
+  const v=curNb.variants[curNbVariantIdx];
+  const isBulk=curNbMode==='bulk';
+  const priceEach=isBulk?v.bulkPrice:v.price;
+  const label=curNb.name+' ('+(v.pages)+'pg)'+(isBulk?' — Bulk Pack ×'+v.bulkQty:'');
+  cart.push({id:Date.now(),name:label,icon:curNb.icon,price:priceEach*curNbQty,qty:curNbQty,each:priceEach,settings:{size:curNb.size,color:'—',binding:'Spiral',pages:v.pages}});
+  updCnt();saveData();toast('✅ '+label+' added!','ok');closeNbDetail();
+}
+function goSvc(cat){
+  if(cat==='passport')return openPhotoPopup('p1');
+  if(cat==='photo')return openPhotoPopup('ph1');
+  if(cat==='cards')return openCardPopup();
+  if(cat==='poster')return openPosterPopup();
+  showPage('products');setTimeout(()=>{switchSection('printing');renderPrintProds(cat);},80);
+}
+
+// ══ PRINT POPUP ══
+const ppTitles={document:'🖨️ Document & Notes Printing',bw:'🖤 Black & White Print',colour:'🌈 4 Colour Print'};
+function openPrintPopup(mode){
+  ppFile=null;ppQty=1;
+  if(mode==='bw')ppMode='bw';
+  else if(mode==='colour')ppMode='cl';
+  else ppMode='bw';
+  ppSide='single';
+  document.getElementById('ppPrev').classList.add('hidden');
+  document.getElementById('ppUpzone').classList.remove('hidden');
+  document.getElementById('ppPageBadge').classList.add('hidden');
+  document.getElementById('ppFi').value='';
+  document.getElementById('ppQv').textContent='1';
+  document.getElementById('ppTitle').textContent=ppTitles[mode]||ppTitles.document;
+  document.getElementById('ppSub').textContent='Configure your print settings below';
+  document.getElementById('mcard-bw').classList.toggle('on',ppMode==='bw');
+  document.getElementById('mcard-cl').classList.toggle('on',ppMode==='cl');
+  document.getElementById('side-single').classList.add('on');
+  document.getElementById('side-double').classList.remove('on');
+  ppUpdateSidePrices();ppCalc();
+  document.getElementById('printPopupOv').classList.add('on');
+}
+function closePrintPopup(){document.getElementById('printPopupOv').classList.remove('on')}
+function closePrintPopupOuter(e){if(e.target===document.getElementById('printPopupOv'))closePrintPopup()}
+
+function ppSelectMode(m){
+  ppMode=m;
+  document.getElementById('mcard-bw').classList.toggle('on',m==='bw');
+  document.getElementById('mcard-cl').classList.toggle('on',m==='cl');
+  ppUpdateSidePrices();ppCalc();
+}
+function ppSelectSide(s){
+  ppSide=s;
+  document.getElementById('side-single').classList.toggle('on',s==='single');
+  document.getElementById('side-double').classList.toggle('on',s==='double');
+  ppCalc();
+}
+function ppUpdateSidePrices(){
+  document.getElementById('sidePrice1').textContent=ppMode==='bw'?'₹1.25/page':'₹2.00/page';
+  document.getElementById('sidePrice2').textContent=ppMode==='bw'?'₹1.50/page':'₹2.50/page';
+}
+async function ppHandleFile(inp){
+  const f=inp.files[0];if(!f)return;ppFile=f;
+  document.getElementById('ppUpzone').classList.add('hidden');
+  document.getElementById('ppPrev').classList.remove('hidden');
+  const isImg=f.type.startsWith('image/');
+  const isPdf=f.type==='application/pdf';
+  document.getElementById('ppFileIcon').textContent=isImg?'🖼️':isPdf?'📕':'📝';
+  document.getElementById('ppFileName').textContent=f.name+' ('+(f.size/1024).toFixed(1)+'KB)';
+  if(isPdf){
+    try{
+      // Lazy load PDF.js only when actually needed
+      if(typeof pdfjsLib==='undefined'){
+        await new Promise((res,rej)=>{
+          const s=document.createElement('script');
+          s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+          s.onload=()=>{pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';res();};
+          s.onerror=rej;document.head.appendChild(s);
+        });
+      }
+      const ab=await f.arrayBuffer();
+      const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+      const n=pdf.numPages;
+      document.getElementById('ppPages').value=n;
+      document.getElementById('ppPageCount').textContent=n;
+      document.getElementById('ppPageBadge').classList.remove('hidden');
+      ppCalc();
+    }catch(e){console.warn('PDF count error',e)}
+  }
+  ppCalc();
+}
+function ppClearFile(){
+  ppFile=null;
+  document.getElementById('ppUpzone').classList.remove('hidden');
+  document.getElementById('ppPrev').classList.add('hidden');
+  document.getElementById('ppPageBadge').classList.add('hidden');
+  document.getElementById('ppFi').value='';
+}
+function ppDv(e,t){
+  e.preventDefault();
+  if(t==='over')document.getElementById('ppUpzone').classList.add('over');
+  else if(t==='leave')document.getElementById('ppUpzone').classList.remove('over');
+  else{
+    document.getElementById('ppUpzone').classList.remove('over');
+    const fi=e.dataTransfer.files[0];
+    if(fi){const dt=new DataTransfer();dt.items.add(fi);document.getElementById('ppFi').files=dt.files;ppHandleFile(document.getElementById('ppFi'));}
+  }
+}
+function ppChgQ(d){ppQty=Math.max(1,ppQty+d);document.getElementById('ppQv').textContent=ppQty;ppCalc()}
+
+const PP_BASE={bw_single:1.25,bw_double:1.50,cl_single:2.00,cl_double:2.50};
+function ppCalc(){
+  const rawPages=parseInt(document.getElementById('ppPages').value)||1;
+  const gsm=parseInt(document.getElementById('ppGsm').value);
+  const bind=document.getElementById('ppBind').value;
+  const isDouble=ppSide==='double';
+  const chargeablePages=isDouble?Math.ceil(rawPages/2):rawPages;
+  const key=ppMode+'_'+ppSide;
+  const basePerSheet=PP_BASE[key]||1.25;
+  const baseCost=basePerSheet*chargeablePages;
+  const gsmExtra=(gsm===100?0.50:0)*chargeablePages;
+  let bindCost=0;
+  if(bind==='spiral70')bindCost=0.40*chargeablePages;
+  else if(bind==='spiral100')bindCost=0.50*chargeablePages;
+  const perCopy=baseCost+gsmExtra+bindCost;
+  const total=perCopy*ppQty;
+  document.getElementById('ppBase').textContent='₹'+baseCost.toFixed(2);
+  document.getElementById('ppGsmEx').textContent='₹'+gsmExtra.toFixed(2);
+  document.getElementById('ppBindCost').textContent='₹'+bindCost.toFixed(2);
+  document.getElementById('ppCopies').textContent='× '+ppQty;
+  document.getElementById('ppTotal').textContent='₹'+total.toFixed(2);
+  document.getElementById('ppHint').textContent=isDouble?rawPages+' pages ÷ 2 = '+chargeablePages+' sheets charged':'';
+}
+
+function ppAddToCart(){
+  const pages=parseInt(document.getElementById('ppPages').value)||1;
+  const bind=document.getElementById('ppBind').value;
+  const total=parseFloat(document.getElementById('ppTotal').textContent.replace('₹',''));
+  const colorLabel=(ppMode==='bw'?'B&W':'Colour')+' '+(ppSide==='double'?'Double':'Single')+' Sided';
+  const nm=ppFile?ppFile.name:'Print Job';
+  cart.push({id:Date.now(),name:nm,icon:'📄',price:total,qty:ppQty,each:total/ppQty,isPrint:true,
+    settings:{size:document.getElementById('ppSize').value.toUpperCase(),color:colorLabel,binding:bind==='none'?'None':bind,pages}});
+  updCnt();saveData();toast('✅ Added to cart!','ok');closePrintPopup();showPage('cart');
+}
+
+// ══ CART ══
+function updCnt(){document.getElementById('cartCount').textContent=cart.reduce((s,i)=>s+i.qty,0)}
+function renderCart(){
+  const el=document.getElementById('cartContent');
+  if(!cart.length){el.innerHTML=`<div class="empty"><div class="ei">🛒</div><h3>Cart is empty</h3><p>Add items to get started</p><button class="btn-p" onclick="showPage('products')">Browse Products</button></div>`;return}
+  const sub=cart.reduce((s,i)=>s+i.price,0);
+  el.innerHTML=cart.map(it=>`
+    <div class="c-item">
+      <div class="ci-top">
+        <div class="ci-ico">${it.icon}</div>
+        <div>
+          <div class="ci-name">${it.name}</div>
+          <div class="ci-tags">
+            <span class="tag">📐 ${it.settings.size}</span>
+            <span class="tag">🎨 ${it.settings.color}</span>
+            <span class="tag">📎 ${it.settings.binding}</span>
+            ${it.settings.pages>1?`<span class="tag">📄 ${it.settings.pages}pg</span>`:''}
+          </div>
+        </div>
+      </div>
+      <div class="ci-bot">
+        <div class="ci-act">
+          <div class="qmini">
+            <button class="qbtn" onclick="cQ(${it.id},-1)">−</button>
+            <span class="qnum">${it.qty}</span>
+            <button class="qbtn" onclick="cQ(${it.id},1)">+</button>
+          </div>
+          <button class="btn-d" onclick="rmIt(${it.id})">🗑️</button>
+        </div>
+        <div class="ci-price">₹${it.price.toFixed(2)}</div>
+      </div>
+    </div>`).join('')+`
+  <div class="tot-card">
+    <div class="trow"><span>Subtotal</span><span>₹${sub.toFixed(2)}</span></div>
+    <div class="trow grand"><span>Total</span><span>₹${sub.toFixed(2)}</span></div>
+    <button class="btn-a" style="margin-top:14px" onclick="goCO()">Checkout →</button>
+    <button class="btn-o" onclick="showPage('products')">+ Add More Items</button>
+  </div>`;
+}
+function cQ(id,d){const it=cart.find(i=>i.id===id);if(!it)return;it.qty=Math.max(1,it.qty+d);it.price=it.each*it.qty;updCnt();saveData();renderCart()}
+function rmIt(id){cart=cart.filter(i=>i.id!==id);updCnt();saveData();renderCart();toast('🗑️ Removed','er')}
+function goCO(){if(!user){openRegPopup(true);return}showPage('checkout')}
+
+// ══ CHECKOUT ══
+function renderCoSum(){
+  const sub=cart.reduce((s,i)=>s+i.price,0);
+  if(user){
+    document.getElementById('co_n').value=user.name||'';
+    document.getElementById('co_co').value=user.co||'';
+    document.getElementById('co_p').value=user.phone||'';
+    document.getElementById('co_v').value=user.village||'';
+    document.getElementById('co_addr').value=user.address||'';
+    document.getElementById('co_po').value=user.po||'';
+    document.getElementById('co_ps').value=user.ps||'';
+    document.getElementById('co_d').value=user.district||'';
+    document.getElementById('co_pin').value=user.pincode||'';
+  }
+  document.getElementById('coSum').innerHTML=`
+    <div style="font-weight:700;font-size:14px;margin-bottom:11px">📦 Order Summary</div>
+    ${cart.map(i=>`<div class="trow"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px">${i.icon} ${i.name}</span><span>₹${i.price.toFixed(2)}</span></div>`).join('')}
+    <div class="trow grand"><span>Total</span><span>₹${sub.toFixed(2)}</span></div>`;
+}
+
+// ══ PLACE ORDER → WhatsApp ══
+function hasPrintItems(){
+  return cart.some(it=>it.isPrint===true||it.settings.color!=='—');
+}
+function placeOrder(){
+  const n=document.getElementById('co_n').value.trim();
+  const p=document.getElementById('co_p').value.trim();
+  const v=document.getElementById('co_v').value.trim();
+  const addr=document.getElementById('co_addr').value.trim();
+  const d=document.getElementById('co_d').value.trim();
+  const pin=document.getElementById('co_pin').value.trim();
+  if(!n||!p||!v||!d||!pin){toast('⚠️ Fill all required fields','er');return}
+  const oid='PX'+Math.floor(Math.random()*900000+100000);
+  const sub=cart.reduce((s,i)=>s+i.price,0);
+  const po=document.getElementById('co_po').value.trim();
+  const ps=document.getElementById('co_ps').value.trim();
+  const co=document.getElementById('co_co').value.trim();
+
+  let msg='🛒 *New Order — PrintX*\n';
+  msg+='Order ID: #'+oid+'\n\n';
+  msg+='*👤 Customer*\n';
+  msg+='Name: '+n+'\n';
+  if(co)msg+='C/O: '+co+'\n';
+  msg+='Phone: '+p+'\n\n';
+  msg+='*📍 Delivery Address*\n';
+  msg+=addr+'\n'+v+'\n';
+  if(po)msg+='P.O: '+po+'\n';
+  if(ps)msg+='P.S: '+ps+'\n';
+  msg+=d+' — '+pin+'\n\n';
+  msg+='*📦 Items*\n';
+  cart.forEach((it,i)=>{
+    msg+=(i+1)+'. '+it.name+'\n';
+    msg+='   '+it.settings.size+' | '+it.settings.color+' | Binding: '+it.settings.binding;
+    if(it.settings.pages>1)msg+=' | '+it.settings.pages+'pg';
+    msg+='\n   Qty: '+it.qty+' × ₹'+it.each.toFixed(2)+' = ₹'+it.price.toFixed(2)+'\n';
+  });
+  msg+='\n*💰 Total: ₹'+sub.toFixed(2)+'*\n\nPlease confirm. Thank you! 🙏';
+  if(hasPrintItems()){
+    msg+='\n\n📄 Please resend your document after this.';
+  }
+
+  orders.unshift({id:oid,items:[...cart],total:sub,date:new Date().toLocaleDateString(),status:'Processing',address:v+', '+d+' '+pin});
+  cart=[];updCnt();saveData();
+  toast('🎉 Order #'+oid+' — opening WhatsApp...','ok');
+  setTimeout(()=>{window.location.href='https://api.whatsapp.com/send?phone='+WA_NUM+'&text='+encodeURIComponent(msg);},1000);
+}
+
+// ══ ORDER HISTORY ══
+function openHistoryPopup(){
+  renderHistory();
+  document.getElementById('historyOv').classList.add('on');
+}
+function closeHistoryPopup(){document.getElementById('historyOv').classList.remove('on')}
+function closeHistoryOuter(e){if(e.target===document.getElementById('historyOv'))closeHistoryPopup()}
+function renderHistory(){
+  const el=document.getElementById('historyContent');
+  if(!orders.length){
+    el.innerHTML=`<div class="hist-empty"><div class="ei">📋</div><h3>No orders yet</h3><p>Your order history will appear here after your first order.</p></div>`;
+    return;
+  }
+  const statusClass={Processing:'pill-proc',Delivered:'pill-delv',Printed:'pill-prnt'};
+  el.innerHTML=orders.map(o=>`
+    <div class="ord-card">
+      <div class="ord-hdr">
+        <div>
+          <div class="ord-id">#${o.id}</div>
+          <div class="ord-dt">${o.date}</div>
+        </div>
+      </div>
+      <div class="ord-addr">📍 ${o.address}</div>
+      <div class="ord-items-list">
+        ${o.items.map(it=>`<div class="ord-item-row"><span>${it.icon} ${it.name}</span><span>₹${it.price.toFixed(2)}</span></div>`).join('')}
+        <div class="ord-total-row"><span>Total</span><span>₹${o.total.toFixed(2)}</span></div>
+      </div>
+    </div>`).join('');
+}
+
+
+// ══ POSTER POPUP ══
+const POSTER_PRICES={
+  bw:{A5:20,A4:30,A3:60,A2:120,A1:200,A0:350},
+  cl:{A5:50,A4:80,A3:150,A2:280,A1:480,A0:800}
+};
+let posterColor='bw',posterSize='A4',posterQty=1,posterFile=null;
+function openPosterPopup(){
+  posterColor='bw';posterSize='A4';posterQty=1;posterFile=null;
+  document.getElementById('posterFi').value='';
+  document.getElementById('posterUpzone').classList.remove('hidden');
+  document.getElementById('posterPrev').classList.add('hidden');
+  document.getElementById('posterQv').textContent='1';
+  document.getElementById('poster-bw').classList.add('on');
+  document.getElementById('poster-cl').classList.remove('on');
+  document.querySelectorAll('#posterSizeGrid .size-btn').forEach(b=>b.classList.toggle('on',b.dataset.size==='A4'));
+  posterCalc();
+  document.getElementById('posterPopupOv').classList.add('on');
+}
+function closePosterPopup(){document.getElementById('posterPopupOv').classList.remove('on')}
+function posterSelectColor(c){
+  posterColor=c;
+  document.getElementById('poster-bw').classList.toggle('on',c==='bw');
+  document.getElementById('poster-cl').classList.toggle('on',c==='cl');
+  posterCalc();
+}
+function posterSelectSize(el,s){
+  posterSize=s;
+  document.querySelectorAll('#posterSizeGrid .size-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  posterCalc();
+}
+function posterHandleFile(inp){
+  const f=inp.files[0];if(!f)return;posterFile=f;
+  document.getElementById('posterUpzone').classList.add('hidden');
+  document.getElementById('posterPrev').classList.remove('hidden');
+  document.getElementById('posterFileIcon').textContent=f.type.startsWith('image/')?'🖼️':'📄';
+  document.getElementById('posterFileName').textContent=f.name;
+  document.getElementById('posterFileSz').textContent=(f.size/1024).toFixed(1)+' KB';
+}
+function posterHandleDrop(e){e.preventDefault();document.getElementById('posterUpzone').classList.remove('over');const f=e.dataTransfer.files[0];if(f){const dt=new DataTransfer();dt.items.add(f);document.getElementById('posterFi').files=dt.files;posterHandleFile(document.getElementById('posterFi'));}}
+function posterClearFile(){posterFile=null;document.getElementById('posterFi').value='';document.getElementById('posterUpzone').classList.remove('hidden');document.getElementById('posterPrev').classList.add('hidden');}
+function posterChgQ(d){posterQty=Math.max(1,posterQty+d);document.getElementById('posterQv').textContent=posterQty;posterCalc();}
+function posterCalc(){
+  const price=(POSTER_PRICES[posterColor]||POSTER_PRICES.bw)[posterSize]||80;
+  const total=price*posterQty;
+  document.getElementById('posterSizeLabel').textContent=posterSize;
+  document.getElementById('posterColorLabel').textContent=posterColor==='bw'?'Black & White':'Full Colour';
+  document.getElementById('posterPriceEach').textContent='₹'+price.toFixed(2);
+  document.getElementById('posterCopiesLabel').textContent='× '+posterQty;
+  document.getElementById('posterTotal').textContent='₹'+total.toFixed(2);
+}
+function posterAddToCart(){
+  const price=(POSTER_PRICES[posterColor]||POSTER_PRICES.bw)[posterSize]||80;
+  const total=price*posterQty;
+  const colorLabel=posterColor==='bw'?'B&W':'Colour';
+  cart.push({id:Date.now(),name:'Poster '+posterSize+(posterFile?' — '+posterFile.name:''),icon:'🗂️',price:total,qty:posterQty,each:price,isPrint:true,
+    settings:{size:posterSize,color:colorLabel,binding:'None',pages:1}});
+  updCnt();saveData();toast('✅ Poster added to cart!','ok');closePosterPopup();showPage('cart');
+}
+
+// ══ PHOTO POPUP ══
+let photoSize='4×6',photoPriceBase=20,photoColor='cl',photoQty=1,photoFile=null;
+function openPhotoPopup(prodId){
+  photoColor='cl';photoQty=1;photoFile=null;
+  // Set defaults based on product
+  if(prodId==='p1'){photoSize='2×2';photoPriceBase=25;}
+  else{photoSize='4×6';photoPriceBase=20;}
+  document.getElementById('photoFi').value='';
+  document.getElementById('photoUpzone').classList.remove('hidden');
+  document.getElementById('photoPrev').classList.add('hidden');
+  document.getElementById('photoQv').textContent='1';
+  document.getElementById('photo-bw').classList.remove('on');
+  document.getElementById('photo-cl').classList.add('on');
+  document.querySelectorAll('#photoSizeGrid .size-btn').forEach(b=>b.classList.toggle('on',b.dataset.size===photoSize));
+  // Update title
+  document.getElementById('photoPopupTitle').textContent=prodId==='p1'?'🧍 Passport Photo':'🖼️ Photo Printing';
+  document.getElementById('photoPopupSub').textContent=prodId==='p1'?'Standard 2×2 inch passport photos':'Upload & configure your photo print';
+  photoCalc();
+  document.getElementById('photoPopupOv').classList.add('on');
+}
+function closePhotoPopup(){document.getElementById('photoPopupOv').classList.remove('on')}
+function photoSelectSize(el,size,price){
+  photoSize=size;photoPriceBase=price;
+  document.querySelectorAll('#photoSizeGrid .size-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  photoCalc();
+}
+function photoSelectColor(c){
+  photoColor=c;
+  document.getElementById('photo-bw').classList.toggle('on',c==='bw');
+  document.getElementById('photo-cl').classList.toggle('on',c==='cl');
+  photoCalc();
+}
+function photoHandleFile(inp){
+  const f=inp.files[0];if(!f)return;photoFile=f;
+  document.getElementById('photoUpzone').classList.add('hidden');
+  document.getElementById('photoPrev').classList.remove('hidden');
+  document.getElementById('photoFileName').textContent=f.name;
+  document.getElementById('photoFileSz').textContent=(f.size/1024).toFixed(1)+' KB';
+}
+function photoHandleDrop(e){e.preventDefault();document.getElementById('photoUpzone').classList.remove('over');const f=e.dataTransfer.files[0];if(f){const dt=new DataTransfer();dt.items.add(f);document.getElementById('photoFi').files=dt.files;photoHandleFile(document.getElementById('photoFi'));}}
+function photoClearFile(){photoFile=null;document.getElementById('photoFi').value='';document.getElementById('photoUpzone').classList.remove('hidden');document.getElementById('photoPrev').classList.add('hidden');}
+function photoChgQ(d){photoQty=Math.max(1,photoQty+d);document.getElementById('photoQv').textContent=photoQty;photoCalc();}
+function photoCalc(){
+  const price=photoColor==='bw'?Math.max(10,photoPriceBase-5):photoPriceBase;
+  const total=price*photoQty;
+  document.getElementById('photoSizeLabel').textContent=photoSize;
+  document.getElementById('photoColorLabel').textContent=photoColor==='bw'?'Black & White':'Full Colour';
+  document.getElementById('photoPriceEach').textContent='₹'+price.toFixed(2);
+  document.getElementById('photoCopiesLabel').textContent='× '+photoQty;
+  document.getElementById('photoTotal').textContent='₹'+total.toFixed(2);
+}
+function photoAddToCart(){
+  const price=photoColor==='bw'?Math.max(10,photoPriceBase-5):photoPriceBase;
+  const total=price*photoQty;
+  const colorLabel=photoColor==='bw'?'B&W':'Colour';
+  cart.push({id:Date.now(),name:'Photo Print '+photoSize+(photoFile?' — '+photoFile.name:''),icon:'🖼️',price:total,qty:photoQty,each:price,isPrint:true,
+    settings:{size:photoSize,color:colorLabel,binding:'None',pages:1}});
+  updCnt();saveData();toast('✅ Photo print added!','ok');closePhotoPopup();showPage('cart');
+}
+
+// ══ CARD POPUP ══
+let cardColor='cl',cardPcs=100,cardPriceBase=250,cardQty=1,cardFile=null;
+function openCardPopup(){
+  cardColor='cl';cardPcs=100;cardPriceBase=250;cardQty=1;cardFile=null;
+  document.getElementById('cardFi').value='';
+  document.getElementById('cardUpzone').classList.remove('hidden');
+  document.getElementById('cardPrev').classList.add('hidden');
+  document.getElementById('cardQv').textContent='1';
+  document.getElementById('card-bw').classList.remove('on');
+  document.getElementById('card-cl').classList.add('on');
+  document.getElementById('cqty-100').classList.add('on');
+  document.getElementById('cqty-500').classList.remove('on');
+  cardCalc();
+  document.getElementById('cardPopupOv').classList.add('on');
+}
+function closeCardPopup(){document.getElementById('cardPopupOv').classList.remove('on')}
+function cardSelectColor(c){
+  cardColor=c;
+  document.getElementById('card-bw').classList.toggle('on',c==='bw');
+  document.getElementById('card-cl').classList.toggle('on',c==='cl');
+  cardCalc();
+}
+function cardSelectQty(pcs,price,elId){
+  cardPcs=pcs;cardPriceBase=price;
+  document.querySelectorAll('#cardPopupOv .sided-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById(elId).classList.add('on');
+  cardCalc();
+}
+function cardHandleFile(inp){
+  const f=inp.files[0];if(!f)return;cardFile=f;
+  document.getElementById('cardUpzone').classList.add('hidden');
+  document.getElementById('cardPrev').classList.remove('hidden');
+  document.getElementById('cardFileName').textContent=f.name;
+  document.getElementById('cardFileSz').textContent=(f.size/1024).toFixed(1)+' KB';
+}
+function cardHandleDrop(e){e.preventDefault();document.getElementById('cardUpzone').classList.remove('over');const f=e.dataTransfer.files[0];if(f){const dt=new DataTransfer();dt.items.add(f);document.getElementById('cardFi').files=dt.files;cardHandleFile(document.getElementById('cardFi'));}}
+function cardClearFile(){cardFile=null;document.getElementById('cardFi').value='';document.getElementById('cardUpzone').classList.remove('hidden');document.getElementById('cardPrev').classList.add('hidden');}
+function cardChgQ(d){cardQty=Math.max(1,cardQty+d);document.getElementById('cardQv').textContent=cardQty;cardCalc();}
+function cardCalc(){
+  const price=cardColor==='bw'?Math.round(cardPriceBase*0.8):cardPriceBase;
+  const total=price*cardQty;
+  document.getElementById('cardQtyLabel').textContent=cardPcs;
+  document.getElementById('cardColorLabel').textContent=cardColor==='bw'?'Black & White':'Full Colour';
+  document.getElementById('cardPriceEach').textContent='₹'+price.toFixed(2);
+  document.getElementById('cardSetsLabel').textContent='× '+cardQty;
+  document.getElementById('cardTotal').textContent='₹'+total.toFixed(2);
+}
+function cardAddToCart(){
+  const price=cardColor==='bw'?Math.round(cardPriceBase*0.8):cardPriceBase;
+  const total=price*cardQty;
+  const colorLabel=cardColor==='bw'?'B&W':'Colour';
+  cart.push({id:Date.now(),name:'Visiting Cards ×'+cardPcs+(cardFile?' — '+cardFile.name:''),icon:'💳',price:total,qty:cardQty,each:price,
+    settings:{size:'Standard',color:colorLabel,binding:'None',pages:cardPcs}});
+  updCnt();saveData();toast('✅ Cards added to cart!','ok');closeCardPopup();showPage('cart');
+}
+
+// ══ CUSTOM POPUP ══
+let customColor='cl',customSize='A4',customQty=1,customFile=null;
+const CUSTOM_PRICES={bw:{A5:100,A4:150,A3:250,A2:400,A1:600,Card:100},cl:{A5:150,A4:200,A3:350,A2:600,A1:900,Card:150}};
+function openCustomPopup(){
+  customColor='cl';customSize='A4';customQty=1;customFile=null;
+  document.getElementById('customFi').value='';
+  document.getElementById('customUpzone').classList.remove('hidden');
+  document.getElementById('customPrev').classList.add('hidden');
+  document.getElementById('customQv').textContent='1';
+  document.getElementById('custom-bw').classList.remove('on');
+  document.getElementById('custom-cl').classList.add('on');
+  document.querySelectorAll('#customSizeGrid .size-btn').forEach(b=>b.classList.toggle('on',b.dataset.size==='A4'));
+  customCalc();
+  document.getElementById('customPopupOv').classList.add('on');
+}
+function closeCustomPopup(){document.getElementById('customPopupOv').classList.remove('on')}
+function customSelectColor(c){
+  customColor=c;
+  document.getElementById('custom-bw').classList.toggle('on',c==='bw');
+  document.getElementById('custom-cl').classList.toggle('on',c==='cl');
+  customCalc();
+}
+function customSelectSize(el,s){
+  customSize=s;
+  document.querySelectorAll('#customSizeGrid .size-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  customCalc();
+}
+function customHandleFile(inp){
+  const f=inp.files[0];if(!f)return;customFile=f;
+  document.getElementById('customUpzone').classList.add('hidden');
+  document.getElementById('customPrev').classList.remove('hidden');
+  document.getElementById('customFileName').textContent=f.name;
+  document.getElementById('customFileSz').textContent=(f.size/1024).toFixed(1)+' KB';
+}
+function customHandleDrop(e){e.preventDefault();document.getElementById('customUpzone').classList.remove('over');const f=e.dataTransfer.files[0];if(f){const dt=new DataTransfer();dt.items.add(f);document.getElementById('customFi').files=dt.files;customHandleFile(document.getElementById('customFi'));}}
+function customClearFile(){customFile=null;document.getElementById('customFi').value='';document.getElementById('customUpzone').classList.remove('hidden');document.getElementById('customPrev').classList.add('hidden');}
+function customChgQ(d){customQty=Math.max(1,customQty+d);document.getElementById('customQv').textContent=customQty;customCalc();}
+function customCalc(){
+  const price=(CUSTOM_PRICES[customColor]||CUSTOM_PRICES.cl)[customSize]||200;
+  const total=price*customQty;
+  document.getElementById('customSizeLabel').textContent=customSize;
+  document.getElementById('customColorLabel').textContent=customColor==='bw'?'Black & White':'Full Colour';
+  document.getElementById('customPriceEach').textContent='₹'+price.toFixed(2);
+  document.getElementById('customCopiesLabel').textContent='× '+customQty;
+  document.getElementById('customTotal').textContent='₹'+total.toFixed(2);
+}
+function customAddToCart(){
+  const price=(CUSTOM_PRICES[customColor]||CUSTOM_PRICES.cl)[customSize]||200;
+  const total=price*customQty;
+  const colorLabel=customColor==='bw'?'B&W':'Colour';
+  cart.push({id:Date.now(),name:'Custom Design '+customSize+(customFile?' — '+customFile.name:''),icon:'✨',price:total,qty:customQty,each:price,isPrint:true,
+    settings:{size:customSize,color:colorLabel,binding:'None',pages:1}});
+  updCnt();saveData();toast('✅ Custom order added!','ok');closeCustomPopup();showPage('cart');
+}
+
+// ══ REGISTRATION ══
+function openRegPopup(fromOrder=false){
+  regCallback=fromOrder?()=>showPage('checkout'):null;
+  document.getElementById('rcDisplayBox').classList.add('hidden');
+  document.getElementById('rcImportBox').classList.remove('hidden');
+  document.getElementById('rcInput').value='';
+  if(user){
+    document.getElementById('rg_n').value=user.name||'';
+    document.getElementById('rg_co').value=user.co||'';
+    document.getElementById('rg_ph').value=user.phone||'';
+    document.getElementById('rg_v').value=user.village||'';
+    document.getElementById('rg_addr').value=user.address||'';
+    document.getElementById('rg_po').value=user.po||'';
+    document.getElementById('rg_ps').value=user.ps||'';
+    document.getElementById('rg_d').value=user.district||'';
+    document.getElementById('rg_pin').value=user.pincode||'';
+    document.getElementById('regStatusBadge').textContent='✏️ Edit Your Details';
+    document.getElementById('regTitle').textContent='Update Account';
+  } else {
+    document.getElementById('regStatusBadge').textContent='📝 New Registration';
+    document.getElementById('regTitle').textContent='Create Your Account';
+  }
+  document.getElementById('regOv').classList.add('on');
+}
+function closeReg(){document.getElementById('regOv').classList.remove('on')}
+function closeRegOuter(e){if(e.target===document.getElementById('regOv'))closeReg()}
+
+function doRegister(){
+  const n=document.getElementById('rg_n').value.trim();
+  const ph=document.getElementById('rg_ph').value.trim();
+  const v=document.getElementById('rg_v').value.trim();
+  const addr=document.getElementById('rg_addr').value.trim();
+  const d=document.getElementById('rg_d').value.trim();
+  const pin=document.getElementById('rg_pin').value.trim();
+  if(!n||!ph||!v||!addr||!d||!pin){toast('⚠️ Fill all required fields','er');return}
+  if(!/^\d{6}$/.test(pin)){toast('⚠️ Pincode must be 6 digits','er');return}
+  if(!/^\+?\d{10,13}$/.test(ph.replace(/\s/g,''))){toast('⚠️ Enter a valid phone number','er');return}
+  const isNew=!user;
+  user={
+    name:n,co:document.getElementById('rg_co').value.trim(),phone:ph,
+    village:v,address:addr,
+    po:document.getElementById('rg_po').value.trim(),
+    ps:document.getElementById('rg_ps').value.trim(),
+    district:d,pincode:pin
+  };
+  const rc=generateRecoveryCode(user);
+  user.recoveryCode=rc;
+  saveData();updDr();
+  document.getElementById('rcDisplayBox').classList.remove('hidden');
+  document.getElementById('rcImportBox').classList.add('hidden');
+  document.getElementById('rcCodeDisplay').textContent=rc;
+  toast((isNew?'🎉 Welcome, ':'✅ Updated, ')+n+'! Save your recovery code.','ok');
+  if(regCallback){const cb=regCallback;regCallback=null;setTimeout(()=>{closeReg();cb();},2000);}
+}
+
+function generateRecoveryCode(u){
+  const payload={n:u.name,co:u.co,ph:u.phone,v:u.village,addr:u.address,po:u.po,ps:u.ps,d:u.district,pin:u.pincode};
+  return 'PX-'+btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/=/g,'');
+}
+function importRecoveryCode(){
+  const raw=document.getElementById('rcInput').value.trim();
+  if(!raw){toast('⚠️ Paste your recovery code first','er');return}
+  try{
+    const b64=raw.replace(/^PX-/,'');
+    const payload=JSON.parse(decodeURIComponent(escape(atob(b64))));
+    user={name:payload.n,co:payload.co||'',phone:payload.ph,village:payload.v,address:payload.addr,
+      po:payload.po||'',ps:payload.ps||'',district:payload.d,pincode:payload.pin,recoveryCode:raw};
+    saveData();updDr();closeReg();
+    toast('🎉 Data restored! Welcome back, '+user.name+'!','ok');
+    if(regCallback){const cb=regCallback;regCallback=null;setTimeout(cb,400);}
+  }catch(e){toast('❌ Invalid recovery code. Please check and try again.','er')}
+}
+function copyRecoveryCode(){
+  const code=document.getElementById('rcCodeDisplay').textContent;
+  navigator.clipboard.writeText(code).then(()=>toast('📋 Recovery code copied!','ok')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=code;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('📋 Copied!','ok');
+  });
+}
+function shareRecoveryCode(){
+  const code=document.getElementById('rcCodeDisplay').textContent;
+  if(navigator.share){navigator.share({title:'PrintX Recovery Code',text:'My PrintX recovery code: '+code}).catch(()=>{})}
+  else{copyRecoveryCode();}
+}
+
+function updDr(){
+  if(!user)return;
+  document.getElementById('dAv').textContent=user.name.charAt(0).toUpperCase();
+  document.getElementById('dName').textContent=user.name;
+  document.getElementById('dSub').textContent=user.phone;
+}
+
+// ══ TOAST ══
+function toast(msg,type='ok'){
+  const el=document.createElement('div');
+  el.className='ti '+type;el.textContent=msg;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(()=>el.remove(),3500);
+}
+
+// ══ SAVE / LOAD ══
+function saveData(){
+  localStorage.setItem('printx_cart',JSON.stringify(cart));
+  localStorage.setItem('printx_orders',JSON.stringify(orders));
+  localStorage.setItem('printx_user',JSON.stringify(user));
+}
+function loadData(){
+  cart=JSON.parse(localStorage.getItem('printx_cart')||'[]');
+  orders=JSON.parse(localStorage.getItem('printx_orders')||'[]');
+  user=JSON.parse(localStorage.getItem('printx_user')||'null');
+  updCnt();
+  if(user)updDr();
+  if(!user){setTimeout(()=>{openRegPopup(false);},3600);}
+}
+
+// INIT
+loadData();
+ppCalc();
+renderStatProds('all');
+
+/* tap feedback via CSS - no JS overhead */
+</script>
+
+/* PDF.js loaded lazily on first file upload */
+</body>
+</html>
